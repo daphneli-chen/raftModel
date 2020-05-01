@@ -11,8 +11,8 @@ demonstrates that when when elections happen with one candidate per election cyc
 
 byte term[CLUSTER_SIZE]; /* term of last log index for a certain node */
 byte index[CLUSTER_SIZE]; /* index of last log index for a certain node */
-byte votes[CLUSTER_SIZE];
 byte status[CLUSTER_SIZE];
+bool oneLeader = FALSE;
 
 inline Vote(voter, candidate, res) {
     if 
@@ -70,6 +70,9 @@ active proctype main() {
     int i;
     for (i: 0 .. CLUSTER_SIZE) { //all nodes start as followers
         status[i] = FOLLOWER; 
+        byte random;
+        index[i] = select(random: 1 .. 11); // each log has certain index length from length 1 to 11
+        term[i] = select(random: 1 .. 6); //modeling with 5 possible terms, so trace doesn't take too long
     }
     leaderExists = FALSE;
     do
@@ -94,15 +97,15 @@ active proctype main() {
             :: else-> skip;
             fi;
         }
-    :: else -> break;
+    :: else -> 
+        OneLeader(oneLeader);
+        break;
     }
     od;
 }
 
 ltl one_leader {
     always {
-        bool one = FALSE;
-        OneLeader(one);
-        eventually(one == TRUE); //check if this is ok
+        eventually(oneLeader == TRUE); //check if this is ok
     }
 }
