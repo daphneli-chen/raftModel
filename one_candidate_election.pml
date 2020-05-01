@@ -27,7 +27,6 @@ inline Vote(voter, candidate, res) {
 inline HoldElection(candidate, elected) {
     term[candidate] = term[candidate] + 1; //candidates increment their term at the beginning of their election cycle
     int count = 0;
-    int i;
     //gather votes from all nodes, candidate will vote for itself 
     for (i: 0 .. CLUSTER_SIZE - 1) {
         res = FALSE
