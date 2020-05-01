@@ -71,8 +71,8 @@ active proctype main() {
     for (i: 0 .. CLUSTER_SIZE) { //all nodes start as followers
         status[i] = FOLLOWER; 
         byte random;
-        index[i] = select(random: 1 .. 11); // each log has certain index length from length 1 to 11
-        term[i] = select(random: 1 .. 6); //modeling with 5 possible terms, so trace doesn't take too long
+        index[i] = 0;//select (random: 1 .. 11); // each log has certain index length from length 1 to 11
+        term[i] = 0; //select (random: 1 .. 6); //modeling with 5 possible terms, so trace doesn't take too long
     }
     leaderExists = FALSE;
     do
@@ -90,9 +90,9 @@ active proctype main() {
 
             if 
             :: !leaderExists -> //resetting for the next loop
-                int i;
-                for (i: 0 .. CLUSTER_SIZE) { //all nodes start as followers
-                    status[i] = FOLLOWER; 
+                int j;
+                for (j: 0 .. CLUSTER_SIZE) { //all nodes start as followers
+                    status[j] = FOLLOWER; 
                 }
             :: else-> skip;
             fi;
