@@ -42,8 +42,8 @@ inline HoldElection(candidate, elected) {
     :: count > (CLUSTER_SIZE/2 + 1) -> 
         elected = TRUE;
         status[candidate] = LEADER;
-        term[leader] = term[leader] + 1 //leader is now in a higher term
-        index[leader] = index[leader] + 1 //adding a new entry for the new term
+        term[candidate] = term[candidate] + 1 //leader is now in a higher term
+        index[candidate] = index[candidate] + 1 //adding a new entry for the new term
     :: else -> elected = FALSE;
     fi;
 
