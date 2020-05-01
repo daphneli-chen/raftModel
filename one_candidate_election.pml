@@ -74,7 +74,7 @@ active proctype main() {
         index[i] = 0;//select (random: 1 .. 11); // each log has certain index length from length 1 to 11
         term[i] = 0; //select (random: 1 .. 6); //modeling with 5 possible terms, so trace doesn't take too long
     }
-    leaderExists = FALSE;
+    bool leaderExists = FALSE;
     do
     :: !leaderExists ->
         for (i: 0 .. CLUSTER_SIZE) { //since the terms and indices of the nodes are all randomized, going through one by one is choosing a candidate 'randomly' like having random timeouts
