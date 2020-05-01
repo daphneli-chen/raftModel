@@ -94,6 +94,7 @@ active proctype main() {
             :: else-> skip;
             fi;
         }
+    :: else -> break;
     }
     od;
 }
