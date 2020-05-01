@@ -29,7 +29,7 @@ inline HoldElection(candidate, elected) {
     int count = 0;
     //gather votes from all nodes, candidate will vote for itself 
     for (i: 0 .. CLUSTER_SIZE - 1) {
-        bool res = FALSE
+        bool res = FALSE;
         Vote(i, candidate, res)
         if 
         :: res -> count = count + 1;
