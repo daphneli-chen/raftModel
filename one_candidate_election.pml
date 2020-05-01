@@ -9,10 +9,10 @@ demonstrates that when when elections happen with one candidate per election cyc
 #define LEADER 2
 
 
-byte term[CLUSTER_SIZE] /* term of last log index for a certain node */
-byte index[CLUSTER_SIZE] /* index of last log index for a certain node */
-byte votes[CLUSTER_SIZE]
-byte status[CLUSTER_SIZE]
+byte term[CLUSTER_SIZE]; /* term of last log index for a certain node */
+byte index[CLUSTER_SIZE]; /* index of last log index for a certain node */
+byte votes[CLUSTER_SIZE];
+byte status[CLUSTER_SIZE];
 
 inline Vote(voter, candidate, res) {
     if 
@@ -85,16 +85,15 @@ active proctype main() {
             :: else -> status[i] = FOLLOWER; //candidate will fall back to leader upon failed election
             fi;
 
+            if 
+            :: !leaderExists -> //resetting for the next loop
+                int i;
+                for (i: 0 .. CLUSTER_SIZE) { //all nodes start as followers
+                    status[i] = FOLLOWER; 
+                }
+            :: else-> skip;
+            fi;
         }
-
-        if 
-        :: !leaderExists -> //resetting for the next loop
-            int i;
-            for (i: 0 .. CLUSTER_SIZE) { //all nodes start as followers
-                status[i] = FOLLOWER; 
-            }
-        :: else-> skip;
-        fi;
     }
     od;
 }
