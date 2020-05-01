@@ -29,7 +29,7 @@ inline HoldElection(candidate, elected) {
     int count = 0;
     //gather votes from all nodes, candidate will vote for itself 
     for (i: 0 .. CLUSTER_SIZE - 1) {
-        bool res = FALSE
+        bool res = FALSE;
         Vote(i, candidate, res)
         if 
         :: res -> count = count + 1;
@@ -42,8 +42,8 @@ inline HoldElection(candidate, elected) {
     :: count > (CLUSTER_SIZE/2 + 1) -> 
         elected = TRUE;
         status[candidate] = LEADER;
-        term[leader] = term[leader] + 1 //leader is now in a higher term
-        index[leader] = index[leader] + 1 //adding a new entry for the new term
+        term[candidate] = term[candidate] + 1 //leader is now in a higher term
+        index[candidate] = index[candidate] + 1 //adding a new entry for the new term
     :: else -> elected = FALSE;
     fi;
 
