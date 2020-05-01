@@ -105,7 +105,5 @@ active proctype main() {
 }
 
 ltl one_leader {
-    always {
-        eventually(oneLeader == TRUE); //check if this is ok
-    }
+    always (eventually(oneLeader == TRUE); //check if this is ok)
 }
