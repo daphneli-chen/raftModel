@@ -15,23 +15,29 @@ byte index[CLUSTER_SIZE]; /* index of last log index for a certain node */
 byte status[CLUSTER_SIZE];
 bool voted[CLUSTER_SIZE];
 bool oneLeader = FALSE;
+bool twoLeader = FALSE;
 
 inline Vote(voter, candidate, res) {
     if 
     :: voted[voter] -> res = FALSE;
-    :: voter == candidate -> res = TRUE; //we will always vote for ourselves in a one candidate election
+    :: voter == candidate ->
+        res = TRUE; //we will always vote for ourselves in a one candidate election
+        voted[voter] = TRUE;
     :: term[voter] > term[candidate] -> res = FALSE; //do not vote for a candidate at a lower term
     :: term[voter] == term[candidate] && index[voter] > index[candidate] -> res = FALSE; //if terms equivalent, do not vote for a candidate who has a shorter log
-    :: else -> res = TRUE;
+    :: else ->
+        res = TRUE;
+        voted[voter] = TRUE;
     fi;
 } 
 
 
-proctype HoldElection(candidate, elected) {
+proctype HoldElection(int candidate; bool elected) {
         term[candidate] = term[candidate] + 1; //candidates increment their term at the beginning of their election cycle
         int count = 0;
         bool res = FALSE;
         //gather votes from all nodes, candidate will vote for itself
+        int i;
         for(i: 0 .. MAX_INDEX) {
             Vote(i, candidate, res);
             if 
@@ -51,7 +57,7 @@ proctype HoldElection(candidate, elected) {
         fi;
 } 
 
-inline OneLeader(res) {
+inline CountLeaders(res1, res2) {
     int count = 0;
     for(i: 0 .. MAX_INDEX) {
         if
@@ -61,8 +67,15 @@ inline OneLeader(res) {
     }
 
     if
-    :: count == 1 -> res = TRUE;
-    :: else -> res = FALSE;
+    :: count == 1 ->
+        res1 = TRUE;
+        res2 = FALSE;
+    :: count == 2 ->
+        res1 = FALSE;
+        res2 = TRUE;
+    :: else ->
+        res1 = FALSE;
+        res2 = TRUE;
     fi;
 }
 
@@ -73,6 +86,7 @@ active proctype main() {
         byte random;
         index[i] = 0; //select (random: 1 .. 11); // each log has certain index length from length 1 to 11
         term[i] = 0; //select (random: 1 .. 6); //modeling with 5 possible terms, so trace doesn't take too long
+        voted[i] = FALSE;
     }
     bool leaderExists = FALSE;
     do
@@ -87,8 +101,14 @@ active proctype main() {
             voted[candidate2] = TRUE; //they will vote for themselves so overall since there are two of them votes don't matter, they just cannot vote for the other
             bool elected1 = FALSE;
             bool elected2 = FALSE;
-            run HoldElection(candidate1, elected);
-            run HoldElection(candidate2, elected);
+            int vot;
+            for(vot: 0 .. MAX_INDEX) {
+                voted[vot] = FALSE;
+            }
+            atomic {
+                run HoldElection(candidate1, elected1);
+                run HoldElection(candidate2, elected2);
+            }
             if
             :: elected1 || elected2 -> 
                 leaderExists = TRUE;
@@ -110,12 +130,12 @@ active proctype main() {
             fi;
         }
     :: else -> 
-        OneLeader(oneLeader);
+        CountLeaders(oneLeader, twoLeader);
         break;
     od;
 }
 
 ltl one_leader {
-    always (eventually (oneLeader == TRUE)); //check if this is ok)
-    //can we do a never twoleaders situation?
+    always(eventually(oneLeader == TRUE) && (twoLeader == FALSE));
+    //check if this is ok
 }
