@@ -31,6 +31,7 @@ log logs[CLUSTER_SIZE];
 byte state[CLUSTER_SIZE];
 lead leader;
 node nodes[CLUSTER_SIZE];
+bool logsMatch = FALSE;
 
 
 inline AppendEntries(leaderTerm, prevLogIndex, prevLogTerm, leaderCommit, self, res) {   
@@ -129,7 +130,7 @@ active proctype main() {
     nodes[0].lastLogIndex = 4; //we have a length 4 log here
     nodes[0].currentTerm = 3;
     lead.id = 0;
-    lead.nextIndex = {4, 4, 4}; //initialized to leader.lastLogIndex
+    lead.nextIndex = {5, 5, 5}; //initialized to leader.lastLogIndex + 1
 
     //INITIALIZATION OF 1st FOLLOWER, just needs to append entries
     logs[1].term = {1, 1, 2, 0, 0};
