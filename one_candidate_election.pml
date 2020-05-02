@@ -20,39 +20,38 @@ inline Vote(voter, candidate, res) {
     :: voter == candidate -> res = TRUE; //we will always vote for ourselves in a one candidate election
     :: term[voter] > term[candidate] -> res = FALSE; //do not vote for a candidate at a lower term
     :: term[voter] == term[candidate] && index[voter] > index[candidate] -> res = FALSE; //if terms equivalent, do not vote for a candidate who has a shorter log
-    else -> res = TRUE;
+    :: else -> res = TRUE;
     fi;
 } 
 
 
 inline HoldElection(candidate, elected) {
-    term[candidate] = term[candidate] + 1; //candidates increment their term at the beginning of their election cycle
-    int count = 0;
-    //gather votes from all nodes, candidate will vote for itself 
-    for (i: 0 .. MAX_INDEX) {
+        term[candidate] = term[candidate] + 1; //candidates increment their term at the beginning of their election cycle
+        int count = 0;
         bool res = FALSE;
-        Vote(i, candidate, res)
-        if 
-        :: res -> count = count + 1;
-        :: else -> skip;
+        //gather votes from all nodes, candidate will vote for itself
+        for(i: 0 .. MAX_INDEX) {
+            Vote(i, candidate, res);
+            if 
+            :: res -> count = count + 1;
+            :: else -> skip;
+            fi;
+        }
+
+        //count votes and figure out who was elected
+        if
+        :: count > (CLUSTER_SIZE/2 + 1) -> 
+            elected = TRUE;
+            status[candidate] = LEADER;
+            term[candidate] = term[candidate] + 1; //leader is now in a higher term
+            index[candidate] = index[candidate] + 1; //adding a new entry for the new term
+        :: else -> elected = FALSE;
         fi;
-    }
-
-    //count votes and figure out who was elected
-    if
-    :: count > (CLUSTER_SIZE/2 + 1) -> 
-        elected = TRUE;
-        status[candidate] = LEADER;
-        term[candidate] = term[candidate] + 1; //leader is now in a higher term
-        index[candidate] = index[candidate] + 1; //adding a new entry for the new term
-    :: else -> elected = FALSE;
-    fi;
-
 } 
 
 inline OneLeader(res) {
     int count = 0;
-    for (i: 0 .. MAX_INDEX) {
+    for(i: 0 .. MAX_INDEX) {
         if
         :: status[i] == LEADER -> count = count + 1;
         :: else -> skip;
@@ -63,12 +62,11 @@ inline OneLeader(res) {
     :: count == 1 -> res = TRUE;
     :: else -> res = FALSE;
     fi;
-
 }
 
 active proctype main() {
     int i;
-    for (i: 0 .. MAX_INDEX) { //all nodes start as followers
+    for(i: 0 .. MAX_INDEX) { //all nodes start as followers
         status[i] = FOLLOWER; 
         byte random;
         index[i] = 0; //select (random: 1 .. 11); // each log has certain index length from length 1 to 11
@@ -78,7 +76,7 @@ active proctype main() {
     do
     :: !leaderExists ->
         int j;
-        for (j: 0 .. MAX_INDEX) { //since the terms and indices of the nodes are all randomized, going through one by one is choosing a candidate 'randomly' like having random timeouts
+        for(j: 0 .. MAX_INDEX) { //since the terms and indices of the nodes are all randomized, going through one by one is choosing a candidate 'randomly' like having random timeouts
             status[j] = CANDIDATE;
             bool elected = FALSE;
             HoldElection(j, elected);
