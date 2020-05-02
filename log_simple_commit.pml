@@ -47,7 +47,7 @@ inline AppendEntries(leaderTerm, prevLogIndex, prevLogTerm, leaderCommit, self, 
         if 
         :: prevLogIndex < curr.lastLogIndex ->
             int j; //prevlogindex is the last index where logs are consistent
-            for (j: prevLogIndex + 1 .. MAX_LOG_LENGTH) { //clearing all the log entries in the follower beyond prevLogIndex
+            for (j: prevLogIndex + 1 .. MAX_LOG_LENGTH - 1) { //clearing all the log entries in the follower beyond prevLogIndex
                 logs[self].term[j] = 0; //0 will indicate not set
                 logs[self].command[j] = 0;
             }
@@ -119,7 +119,7 @@ active proctype main() {
     //initialize logs for each node (?) - term should be ascending, length should be randomly determined, contents randomly determined
     //need to initialize where term nor command = 0 ever
     int i;
-    for (i: 0.. CLUSTER_SIZE) {
+    for (i: 0.. CLUSTER_SIZE - 1) {
         status[i] = FOLLOWER
     }
 
@@ -147,14 +147,26 @@ active proctype main() {
     //choose a leader, have the leader run appendEntryinPeer on all other nodes. 
     //we want to prove the log matching property 
     int i;
-    for (i: 1 .. CLUSTER_SIZE) {
+    for (i: 1 .. CLUSTER_SIZE - 1) {
         appendEntryInPeer(i, nodes[0].lastLogIndex, )
     }
     //TODO: check that the logs all match
+    bool matches = TRUE;
+    int j;
+    for (j: 1 .. CLUSTER_SIZE - 1) {
+        for (entry: 0 .. lead.lastLogIndex) {
+            if
+            :: logs[j].term[entry] != logs[lead.id].term[entry] || logs[j].command[entry] != logs[lead.id].command[entry] ->
+                matches = FALSE;
+            :: else -> skip;
+            fi;
+        }
+    }
+    logsMatch = matches;
 }
 
 ltl one_leader {
-    always {
-        eventually(); //the logs all match
-    }
+    always ()
+        eventually(logsMatch == TRUE) //the logs all match
+    );
 }
