@@ -2,6 +2,7 @@
 demonstrates that when when elections happen with one candidate per election cycle a leader will always be elected 
 */
 #define CLUSTER_SIZE 5 //the number of nodes in the cluster
+#define MAX_INDEX 4
 #define FALSE 0
 #define TRUE 1
 #define FOLLOWER 0
@@ -28,7 +29,7 @@ inline HoldElection(candidate, elected) {
     term[candidate] = term[candidate] + 1; //candidates increment their term at the beginning of their election cycle
     int count = 0;
     //gather votes from all nodes, candidate will vote for itself 
-    for (i: 0 .. CLUSTER_SIZE - 1) {
+    for (i: 0 .. MAX_INDEX) {
         bool res = FALSE;
         Vote(i, candidate, res)
         if 
@@ -42,16 +43,16 @@ inline HoldElection(candidate, elected) {
     :: count > (CLUSTER_SIZE/2 + 1) -> 
         elected = TRUE;
         status[candidate] = LEADER;
-        term[candidate] = term[candidate] + 1 //leader is now in a higher term
-        index[candidate] = index[candidate] + 1 //adding a new entry for the new term
+        term[candidate] = term[candidate] + 1; //leader is now in a higher term
+        index[candidate] = index[candidate] + 1; //adding a new entry for the new term
     :: else -> elected = FALSE;
     fi;
 
 } 
 
 inline OneLeader(res) {
-    int count = 0
-    for (i: 0 .. CLUSTER_SIZE) {
+    int count = 0;
+    for (i: 0 .. MAX_INDEX) {
         if
         :: status[i] == LEADER -> count = count + 1;
         :: else -> skip;
@@ -67,42 +68,42 @@ inline OneLeader(res) {
 
 active proctype main() {
     int i;
-    for (i: 0 .. CLUSTER_SIZE) { //all nodes start as followers
+    for (i: 0 .. MAX_INDEX) { //all nodes start as followers
         status[i] = FOLLOWER; 
         byte random;
-        index[i] = 0;//select (random: 1 .. 11); // each log has certain index length from length 1 to 11
+        index[i] = 0; //select (random: 1 .. 11); // each log has certain index length from length 1 to 11
         term[i] = 0; //select (random: 1 .. 6); //modeling with 5 possible terms, so trace doesn't take too long
     }
     bool leaderExists = FALSE;
     do
     :: !leaderExists ->
-        for (i: 0 .. CLUSTER_SIZE) { //since the terms and indices of the nodes are all randomized, going through one by one is choosing a candidate 'randomly' like having random timeouts
-            status[i] = CANDIDATE;
+        int j;
+        for (j: 0 .. MAX_INDEX) { //since the terms and indices of the nodes are all randomized, going through one by one is choosing a candidate 'randomly' like having random timeouts
+            status[j] = CANDIDATE;
             bool elected = FALSE;
-            HoldElection(i, elected);
+            HoldElection(j, elected);
             if
             :: elected -> 
                 leaderExists = TRUE;
                 break;
-            :: else -> status[i] = FOLLOWER; //candidate will fall back to leader upon failed election
+            :: else -> status[j] = FOLLOWER; //candidate will fall back to leader upon failed election
             fi;
 
             if 
             :: !leaderExists -> //resetting for the next loop
-                int j;
-                for (j: 0 .. CLUSTER_SIZE) { //all nodes start as followers
-                    status[j] = FOLLOWER; 
+                int k;
+                for (k: 0 .. MAX_INDEX) { //all nodes start as followers
+                    status[k] = FOLLOWER; 
                 }
-            :: else-> skip;
+            :: else -> skip;
             fi;
         }
     :: else -> 
         OneLeader(oneLeader);
         break;
-    }
     od;
 }
 
 ltl one_leader {
-    always (eventually(oneLeader == TRUE); //check if this is ok)
+    always (eventually (oneLeader == TRUE)); //check if this is ok)
 }
