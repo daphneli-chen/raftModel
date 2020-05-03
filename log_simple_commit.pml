@@ -22,14 +22,14 @@ typedef leader {
     // byte matchIndex[CLUSTER_SIZE]
 }
 typedef node {
-    byte currentTerm
-    byte lastLogIndex
+    byte currentTerm;
+    byte lastLogIndex;
     // byte commitIndex
 }
 log logs[CLUSTER_SIZE];
 //byte commitIndex[CLUSTER_SIZE];
-byte state[CLUSTER_SIZE];
-lead leader;
+byte status[CLUSTER_SIZE];
+//leader lead;
 node nodes[CLUSTER_SIZE];
 bool logsMatch = FALSE;
 
@@ -80,7 +80,8 @@ inline AppendEntries(leaderTerm, prevLogIndex, prevLogTerm, leaderCommit, self, 
 }
 
 inline appendEntryInPeer(peer, lastIndex) {
-    leaderNode = nodes[lead.id];
+    byte leadId = lead.id;
+    node leaderNode = nodes[leadId];
     prevIndex = lead.nextIndex[peer] - 1;
     prevTerm = logs[lead.id].term[prevIndex];
     // leaderCommit = leaderNode.commitIndex;
@@ -90,7 +91,7 @@ inline appendEntryInPeer(peer, lastIndex) {
     :: !appended -> 
         lead.nextIndex[peer] = lead.nextIndex[peer] - 1;
         appendEntryInPeer(peer, lastIndex) //check does this work?, will it alter res appropriately?
-    : else -> 
+    :: else -> 
         lead.nextIndex[peer] = lastIndex + 1; //updating appropriate maps, we are now done with this peer
         // leader.matchIndex[peer] = lastIndex;
         // if 
@@ -120,9 +121,32 @@ active proctype main() {
     //need to initialize where term nor command = 0 ever
     int i;
     for (i: 0.. CLUSTER_SIZE - 1) {
-        status[i] = FOLLOWER
+        status[i] = FOLLOWER;
     }
+    leader lead;
+    //INITIALIZATION OF THE LEADER
+    status[0] = LEADER;
+    logs[0].term[0] = 1; logs[0].term[1] = 1; logs[0].term[2] = 2;
+    logs[0].term[3] = 2; logs[0].term[4] = 3;
+    logs[0].command[0] = 5; logs[0].command[1] = 5; logs[0].command[2] = 5;
+    logs[0].command[3] = 5; logs[0].command[4] = 5;
+    nodes[0].lastLogIndex = 4; nodes[0].currentTerm = 3;
+    lead.id = 0;
+    lead.nextIndex[0] = 5; lead.nextIndex[1] = 5; lead.nextIndex[2] = 5;
 
+    logs[1].term[0] = 1; logs[1].term[1] = 1; logs[1].term[2] = 2;
+    logs[1].term[3] = 0; logs[1].term[4] = 0;
+    logs[1].command[0] = 5; logs[1].command[1] = 5; logs[1].command[2] = 5;
+    logs[1].command[3] = 0; logs[1].command[4] = 0;
+    nodes[1].lastLogIndex = 3; nodes[1].currentTerm = 2;
+
+    logs[2].term[0] = 1; logs[2].term[1] = 1; logs[2].term[2] = 1;
+    logs[2].term[3] = 1; logs[2].term[4] = 1;
+    logs[2].command[0] = 1; logs[2].command[1] = 1; logs[2].command[2] = 1;
+    logs[2].command[3] = 1; logs[2].command[4] = 1;
+    nodes[2].lastLogIndex = 5; nodes[2].currentTerm = 1;
+
+    /*
     //INITIALIZATION OF THE LEADER
     status[0] = LEADER; 
     logs[0].term = {1, 1, 2, 2, 3}; //give leader highest term
@@ -135,26 +159,27 @@ active proctype main() {
     //INITIALIZATION OF 1st FOLLOWER, just needs to append entries
     logs[1].term = {1, 1, 2, 0, 0};
     logs[1].command = {5, 5, 5, 0, 0};
-    nodex[1].lastLogIndex = 3;
+    nodes[1].lastLogIndex = 3;
     nodes[1].currentTerm = 2;
 
     //INITIALIZATION OF 2nd FOLLOWER, completely messed up logs due to a network partition
     logs[2].term = {1, 1, 1, 1, 1};
-    logs[2].command = [1, 1, 1, 1, 1];
-    nodes[2].lastIndex = 5;
+    logs[2].command = {1, 1, 1, 1, 1};
+    nodes[2].lastLogIndex = 5;
     nodes[2].currentTerm = 1; //at a lower term than the leader so will accept
+    */
 
     //choose a leader, have the leader run appendEntryinPeer on all other nodes. 
     //we want to prove the log matching property 
-    int i;
-    for (i: 1 .. CLUSTER_SIZE - 1) {
-        appendEntryInPeer(i, nodes[0].lastLogIndex, )
+    int i2;
+    for(i2: 1 .. CLUSTER_SIZE - 1) {
+        appendEntryInPeer(i2, nodes[0].lastLogIndex);
     }
     //TODO: check that the logs all match
     bool matches = TRUE;
     int j;
-    for (j: 1 .. CLUSTER_SIZE - 1) {
-        for (entry: 0 .. lead.lastLogIndex) {
+    for(j: 1 .. CLUSTER_SIZE - 1) {
+        for(entry: 0 .. lead.lastLogIndex) {
             if
             :: logs[j].term[entry] != logs[lead.id].term[entry] || logs[j].command[entry] != logs[lead.id].command[entry] ->
                 matches = FALSE;
@@ -166,7 +191,7 @@ active proctype main() {
 }
 
 ltl one_leader {
-    always ()
+    always(
         eventually(logsMatch == TRUE) //the logs all match
     );
 }
