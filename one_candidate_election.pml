@@ -69,10 +69,10 @@ active proctype main() {
     for(i: 0 .. MAX_INDEX) { //all nodes start as followers
         status[i] = FOLLOWER; 
         byte random1;
-	      select (random1: 1 .. 11);
+	select (random1: 1 .. 11);
         index[i] = random1; //each log has certain index length from length 1 to 11
-	      byte random2;
-	      select (random2 : 1 .. 6);
+	byte random2;
+	select (random2 : 1 .. 6);
         term[i] = random2; //modeling with 5 possible terms, so trace doesn't take too long
     }
     bool leaderExists = FALSE;
