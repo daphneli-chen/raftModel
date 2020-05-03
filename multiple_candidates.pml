@@ -1,5 +1,5 @@
 /*
-demonstrates that when when elections happen with one candidate per election cycle a leader will always be elected 
+TO-DO: COMMENT THIS
 */
 #define CLUSTER_SIZE 5 //the number of nodes in the cluster
 #define MAX_INDEX 4
@@ -21,7 +21,7 @@ inline Vote(voter, candidate, res) {
     if 
     :: voted[voter] -> res = FALSE;
     :: voter == candidate ->
-        res = TRUE; //we will always vote for ourselves in a one candidate election
+        res = TRUE;
         voted[voter] = TRUE;
     :: term[voter] > term[candidate] -> res = FALSE; //do not vote for a candidate at a lower term
     :: term[voter] == term[candidate] && index[voter] > index[candidate] -> res = FALSE; //if terms equivalent, do not vote for a candidate who has a shorter log
@@ -83,9 +83,12 @@ active proctype main() {
     int i;
     for(i: 0 .. MAX_INDEX) { //all nodes start as followers
         status[i] = FOLLOWER; 
-        byte random;
-        index[i] = 0; //select (random: 1 .. 11); // each log has certain index length from length 1 to 11
-        term[i] = 0; //select (random: 1 .. 6); //modeling with 5 possible terms, so trace doesn't take too long
+        byte random1;
+	select (random1: 1 .. 11);
+        index[i] = random1; // each log has certain index length from length 1 to 11
+        byte random2;
+	select (random2: 1 .. 6);
+	term[i] = 0; //modeling with 5 possible terms, so trace doesn't take too long
         voted[i] = FALSE;
     }
     bool leaderExists = FALSE;
@@ -96,7 +99,7 @@ active proctype main() {
             int candidate1 = j;
             int candidate2 = MAX_INDEX - j;
             status[candidate1] = CANDIDATE;
-            status[candidate2] = CANDIDATE; //choose the other candidate becuase this will never coincide in a cluster size of 5
+            status[candidate2] = CANDIDATE; //choose the other candidate because this will never coincide in a cluster size of 5
             voted[candidate1] = TRUE;
             voted[candidate2] = TRUE; //they will vote for themselves so overall since there are two of them votes don't matter, they just cannot vote for the other
             bool elected1 = FALSE;
