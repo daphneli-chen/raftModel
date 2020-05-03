@@ -81,8 +81,8 @@ inline AppendEntries(leaderTerm, prevLogIndex, prevLogTerm, self, res) {
 
 inline appendEntryInPeer(peer, lastIndex) {
     byte leadId = lead.id;
-    prevIndex = lead.nextIndex[peer] - 1;
-    prevTerm = logs[lead.id].term[prevIndex];
+    byte prevIndex = lead.nextIndex[peer] - 1;
+    byte prevTerm = logs[lead.id].term[prevIndex];
     // leaderCommit = leaderNode.commitIndex;
     appended = FALSE;
     AppendEntries(nodes[leadId].currentTerm, prevIndex, prevTerm, peer, appended);
