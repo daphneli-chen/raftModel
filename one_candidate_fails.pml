@@ -1,3 +1,0 @@
-/*
-demonstrates that when one candidate is not up to date with the rest of the nodes it will fail
-*/
