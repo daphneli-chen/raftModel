@@ -34,7 +34,7 @@ node nodes[CLUSTER_SIZE];
 bool logsMatch = FALSE;
 
 
-inline AppendEntries(leaderTerm, prevLogIndex, prevLogTerm, leaderCommit, self, res) {   
+inline AppendEntries(leaderTerm, prevLogIndex, prevLogTerm, self, res) {   
     follower curr = nodes[self];
     if
     :: leaderTerm < curr.currentTerm -> res = FALSE;
@@ -86,7 +86,7 @@ inline appendEntryInPeer(peer, lastIndex) {
     prevTerm = logs[lead.id].term[prevIndex];
     // leaderCommit = leaderNode.commitIndex;
     appended = FALSE;
-    AppendEntries(leaderNode.currentTerm, prevIndex, prevTerm, leaderCommit, peer, appended);
+    AppendEntries(leaderNode.currentTerm, prevIndex, prevTerm, peer, appended);
     if
     :: !appended -> 
         lead.nextIndex[peer] = lead.nextIndex[peer] - 1;
