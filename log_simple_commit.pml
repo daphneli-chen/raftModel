@@ -18,7 +18,7 @@ typedef log {
 }
 typedef leader {
     byte id;
-    byte nextIndex[CLUSTER_SIZE];
+    int nextIndex[CLUSTER_SIZE];
     // byte matchIndex[CLUSTER_SIZE]
 }
 typedef node {
@@ -35,9 +35,8 @@ bool logsMatch = FALSE;
 
 
 inline AppendEntries(leaderTerm, prevLogIndex, prevLogTerm, self, res) {   
-    follower curr = nodes[self];
     if
-    :: leaderTerm < curr.currentTerm -> res = FALSE;
+    :: leaderTerm < nodes[self].currentTerm -> res = FALSE;
     :: logs[self].term[prevLogIndex] != prevLogTerm -> res = FALSE;
     :: else -> res = TRUE;
     fi;
@@ -45,22 +44,22 @@ inline AppendEntries(leaderTerm, prevLogIndex, prevLogTerm, self, res) {
     if //if we are going to append
     :: res ->
         if 
-        :: prevLogIndex < curr.lastLogIndex ->
+        :: prevLogIndex < nodes[self].lastLogIndex ->
             int j; //prevlogindex is the last index where logs are consistent
             for (j: prevLogIndex + 1 .. MAX_LOG_LENGTH - 1) { //clearing all the log entries in the follower beyond prevLogIndex
                 logs[self].term[j] = 0; //0 will indicate not set
                 logs[self].command[j] = 0;
             }
-            curr.lastLogIndex = prevLogIndex;
+            nodes[self].lastLogIndex = prevLogIndex;
         :: else -> skip;
         fi;
 
-        int i = prevLogIndex + 1;
+        int ind = prevLogIndex + 1;
         do 
-        :: logs[lead.id].term[i] != 0 -> //while there are logs in the leader to append, change the follower's logs to match the leaders
-            logs[self].term[i] = logs[lead.id].term[i];
-            logs[self].command[i] = logs[lead.id].command[i];
-            curr.lastLogIndex = curr.lastLogIndex + 1; //increment how long your log is
+        :: logs[lead.id].term[ind] != 0 -> //while there are logs in the leader to append, change the follower's logs to match the leaders
+            logs[self].term[ind] = logs[lead.id].term[ind];
+            logs[self].command[ind] = logs[lead.id].command[ind];
+            nodes[self].lastLogIndex = nodes[self].lastLogIndex + 1; //increment how long your log is
         :: else -> break;
         od;
 
@@ -79,19 +78,19 @@ inline AppendEntries(leaderTerm, prevLogIndex, prevLogTerm, self, res) {
 
 }
 
-inline appendEntryInPeer(peer, lastIndex) {
+inline appendEntryInPeer(peer, lastIndex, appended) {
     byte leadId = lead.id;
-    byte prevIndex = lead.nextIndex[peer] - 1;
-    byte prevTerm = logs[lead.id].term[prevIndex];
+    int prevIndex = lead.nextIndex[peer];
+    byte prevTerm = logs[lead.id].term[lead.nextIndex[peer] - 1];
     // leaderCommit = leaderNode.commitIndex;
-    appended = FALSE;
     AppendEntries(nodes[leadId].currentTerm, prevIndex, prevTerm, peer, appended);
     if
     :: !appended -> 
         lead.nextIndex[peer] = lead.nextIndex[peer] - 1;
-        appendEntryInPeer(peer, lastIndex) //check does this work?, will it alter res appropriately?
+        //check does this work?, will it alter res appropriately?
     :: else -> 
         lead.nextIndex[peer] = lastIndex + 1; //updating appropriate maps, we are now done with this peer
+        appended = TRUE;
         // leader.matchIndex[peer] = lastIndex;
         // if 
         // :: lastIndex > leaderNode.commitIndex && logs[leader.id].term[lastIndex] == leader.currentTerm ->
@@ -172,13 +171,20 @@ active proctype main() {
     //we want to prove the log matching property 
     int i2;
     for(i2: 1 .. CLUSTER_SIZE - 1) {
-        appendEntryInPeer(i2, nodes[0].lastLogIndex);
+        bool appended = FALSE;
+        appendEntryInPeer(i2, nodes[0].lastLogIndex, appended);
+        do
+        :: !appended ->
+            appendEntryInPeer(i2, nodes[0].lastLogIndex, appended);
+        :: else -> break;
+        od;
     }
     //TODO: check that the logs all match
     bool matches = TRUE;
     int j;
     for(j: 1 .. CLUSTER_SIZE - 1) {
-        for(entry: 0 .. lead.lastLogIndex) {
+        int entry;
+        for(entry: 0 .. nodes[lead.id].lastLogIndex) {
             if
             :: logs[j].term[entry] != logs[lead.id].term[entry] || logs[j].command[entry] != logs[lead.id].command[entry] ->
                 matches = FALSE;
