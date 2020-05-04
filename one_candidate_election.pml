@@ -1,5 +1,5 @@
 /*
-demonstrates that when when elections happen with one candidate per election cycle a leader will always be elected 
+Demonstrates that when when elections happen with one candidate per election cycle a leader will always be elected.
 */
 #define CLUSTER_SIZE 5 //the number of nodes in the cluster
 #define MAX_INDEX 4
@@ -15,6 +15,9 @@ byte index[CLUSTER_SIZE]; /* index of last log index for a certain node */
 byte status[CLUSTER_SIZE];
 bool oneLeader = FALSE;
 
+/*
+Voting rules based on the term/logs of the candidate compared to the voter.
+*/
 inline Vote(voter, candidate, res) {
     d_step {
         bool sameNode = voter == candidate;
@@ -29,13 +32,15 @@ inline Vote(voter, candidate, res) {
     }
 } 
 
-
+/*
+Models the election process for a given candidate.
+*/
 inline HoldElection(candidate, elected) {
         d_step {
             term[candidate] = term[candidate] + 1; //candidates increment their term at the beginning of their election cycle
             int count = 0;
             bool res = FALSE;
-            //gather votes from all nodes, candidate will vote for itself
+            //gather votes from all nodes (candidate will vote for itself)
             int i;
             for(i: 0 .. MAX_INDEX) {
                 Vote(i, candidate, res);
@@ -49,6 +54,7 @@ inline HoldElection(candidate, elected) {
             if
             :: count > (CLUSTER_SIZE/2 + 1) -> 
                 elected = TRUE;
+		//if a majority of nodes vote for a candidate, candidate becomes the leader
                 status[candidate] = LEADER;
                 term[candidate] = term[candidate] + 1; //leader is now in a higher term
                 index[candidate] = index[candidate] + 1; //adding a new entry for the new term
@@ -57,6 +63,9 @@ inline HoldElection(candidate, elected) {
         }
 } 
 
+/*
+Counts the number of leaders (should only be one).
+*/
 inline OneLeader(res) {
     d_step {
 	int i;
@@ -119,5 +128,5 @@ active proctype main() {
 }
 
 ltl one_leader {
-    always (eventually (oneLeader == TRUE)); //check if this is ok)
+    always (eventually (oneLeader == TRUE));
 }
