@@ -102,12 +102,13 @@ active proctype main() {
             voted[i] = FALSE;
         }
     }
-    d_step {
-        bool leaderExists = FALSE;
-        do
-        :: !leaderExists ->
-            int j;
-            for(j: 0 .. MAX_INDEX) { //since the terms and indices of the nodes are all randomized, going through one by one is choosing a candidate 'randomly' like having random timeouts
+   
+    bool leaderExists = FALSE;
+    do
+    :: !leaderExists ->
+        int j;
+        for(j: 0 .. MAX_INDEX) { //since the terms and indices of the nodes are all randomized, going through one by one is choosing a candidate 'randomly' like having random timeouts
+            d_step {
                 int candidate1 = j;
                 int candidate2 = MAX_INDEX - j;
                 status[candidate1] = CANDIDATE;
@@ -120,11 +121,13 @@ active proctype main() {
                 for(vot: 0 .. MAX_INDEX) {
                     voted[vot] = FALSE;
                 }
-                atomic {
-                    run HoldElection(candidate1, elected1);
-                    run HoldElection(candidate2, elected2);
-                }
-                if
+            }
+            atomic {
+                run HoldElection(candidate1, elected1);
+                run HoldElection(candidate2, elected2);
+            }
+            d_step {
+            if
                 :: elected1 ->
                     if
                     :: elected2 ->
@@ -150,7 +153,9 @@ active proctype main() {
                 :: !elected1 && !elected2 ->
                     status[j] = FOLLOWER;
                 fi;
+            }
 
+            d_step {
                 if 
                 :: !leaderExists -> //resetting for the next loop
                     int k;
@@ -160,11 +165,11 @@ active proctype main() {
                 :: leaderExists -> skip;
                 fi;
             }
-        :: leaderExists -> 
-            CountLeaders(oneLeader, twoLeader);
-            break;
-        od;
-    }
+        }
+    :: leaderExists -> 
+        CountLeaders(oneLeader, twoLeader);
+        break;
+    od;
 }
 
 ltl one_leader {
