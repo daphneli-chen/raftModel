@@ -140,6 +140,8 @@ active proctype main() {
             bool termsDontMatchLeader = logs[j].term[entry] != logs[lead.id].term[entry];
             bool commandsDontMatchLeader = logs[j].command[entry] != logs[lead.id].command[entry];
             bool termsOrCommandsDontMatchLeader = termsDontMatchLeader || commandsDontMatchLeader;
+            if 
+            :: termsOrCommandsDontMatchLeader -> fprintf("logs expected %d but got %d and commands expected %d but got %d", logs[lead.id].term[entry], logs[j].term[entry], logs[lead.id].command[entry], logs[j].command[entry]);
             if
             :: termsOrCommandsDontMatchLeader ->
                 matches = FALSE;
