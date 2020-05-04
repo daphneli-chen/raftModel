@@ -22,7 +22,7 @@ Voting rules based on the term/logs of the candidate compared to the voter.
 */
 inline Vote(voter, candidate, res) {
     d_step {
-        bool sameNode = voter == candidate;
+        bool sameNode = voter == candidate; //we will vote for ourselves
         bool greaterTerm = term[voter] > term[candidate];
         bool sameTermGreaterIndex = term[voter] == term[candidate] && index[voter] > index[candidate];
         if 
@@ -128,7 +128,7 @@ active proctype main() {
         :: elected1 ->
             if
             :: elected2 ->
-                //OH NO HOW DID THEY BOTH GET ELECTED
+                //OH NO HOW DID THEY BOTH GET ELECTED- mark this as an issue
                 leaderExists = TRUE;
                 oneLeader = FALSE;
                 break;
@@ -140,7 +140,7 @@ active proctype main() {
         :: elected2 ->
             if
             :: elected1 ->
-                //OH NO HOW DID THEY BOTH GET ELECTED
+                //OH NO HOW DID THEY BOTH GET ELECTED- mark as issue
                 leaderExists = TRUE;
                 oneLeader = FALSE;
                 break;
