@@ -14,6 +14,7 @@ multiple_candidates.pml:
     Originally we were trying to prove that raft will always elect one leader, but we realized that with the setup of spin it was sometimes having one candidate not actually call for votes which meant that no one got elected or there would be unsuitable candidates, and these model the real life situations of network partitions and unreasonable leaders calling for elections so we modified our ltl just to make sure that no election cycle would produce more than one leader, because a cluster 0 or 1 leaders is okay but a cluster with more than 1 would go against the presuppositions of raft. 
 
 split_vote.pml:
+	This file models a split vote in a two candidate election (i.e. each candidate gets half of the votes). The structure is similar to multiple_candidates, except the cluster size is 6 nodes instead of 5 to account for the potential of a split vote. The ltl property that we are proving in this file is that there will never be more than one leader in an election with a split vote (only 0 or 1 leader) because the election process in the raft protocol will never elect more than one leader even when the vote is split. This file also requires a very large search space, similarly to multiple_candidates.
 
 log_simple_commit:
 	This file simulates Raft's log replication process. We start by initializing the logs for each node with randomly determined length and contents, and ascending terms. One the logs have all been initialized, 
