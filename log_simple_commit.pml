@@ -49,6 +49,7 @@ inline AppendEntries(leaderTerm, prevLogIndex, prevLogTerm, self, res) {
         :: prevLogIndex < nodes[self].lastLogIndex ->
             int j; //prevlogindex is the last index where logs are consistent
             for (j: prevLogIndex + 1 .. MAX_LOG_LENGTH - 1) { //clearing all the log entries in the follower beyond prevLogIndex
+                printf("%d", j);
                 logs[self].term[j] = 0; //0 will indicate not set
                 logs[self].command[j] = 0;
             }
