@@ -145,6 +145,7 @@ active proctype main() {
             fi;
             if
             :: termsOrCommandsDontMatchLeader ->
+                printf("BAD STUFF");
                 matches = FALSE;
             :: !termsOrCommandsDontMatchLeader -> skip;
             fi;
