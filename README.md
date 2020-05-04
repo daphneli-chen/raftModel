@@ -16,5 +16,6 @@ multiple_candidates.pml:
 split_vote.pml:
 
 log_simple_commit:
+	This file simulates Raft's log replication process. We start by initializing the logs for each node with randomly determined length and contents, and ascending terms. One the logs have all been initialized, 
 
 log_commit_paper:
