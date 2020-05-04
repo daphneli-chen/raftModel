@@ -17,23 +17,26 @@ typedef log {
     byte command[MAX_LOG_LENGTH] //what the command is
 }
 typedef leader {
-    byte id;
-    int nextIndex[CLUSTER_SIZE];
+    byte id; //the id number of the leader node
+    int nextIndex[CLUSTER_SIZE]; //the index that the leader's next log will have
 }
 typedef node {
-    byte currentTerm;
-    byte lastLogIndex;
+    byte currentTerm; //the current election cycle of a node
+    byte lastLogIndex; //the index of the last log in a node
 }
 log logs[CLUSTER_SIZE];
 byte status[CLUSTER_SIZE];
 node nodes[CLUSTER_SIZE];
 bool logsMatch = FALSE;
 
-
+//Appends the leader's log entries to a node if that node doesn't have as many logs
 inline AppendEntries(leaderTerm, prevLogIndex, prevLogTerm, self, res) {  
     d_step {
         bool higherTermThanLeader = leaderTerm < nodes[self].currentTerm;
-        bool indexNotMatchPrevLog = logs[self].term[prevLogIndex] != prevLogTerm; 
+        bool indexNotMatchPrevLog = logs[self].term[prevLogIndex] != prevLogTerm;
+        //Check if we need to append entries
+        //If the term is lower than the leaders
+        //and their previous log's index doesn't match their previous log, we must append
         if
         :: higherTermThanLeader -> 
             res = FALSE;
@@ -50,15 +53,16 @@ inline AppendEntries(leaderTerm, prevLogIndex, prevLogTerm, self, res) {
         :: prevLogIndex < nodes[self].lastLogIndex ->
             int j; //prevlogindex is the last index where logs are consistent
             for (j: prevLogIndex + 1 .. MAX_LOG_LENGTH - 1) { //clearing all the log entries in the follower beyond prevLogIndex
-                printf("%d", j);
                 logs[self].term[j] = 0; //0 will indicate not set
                 logs[self].command[j] = 0;
             }
             nodes[self].lastLogIndex = prevLogIndex;
-        :: prevLogIndex >= nodes[self].lastLogIndex -> skip;
+        :: prevLogIndex >= nodes[self].lastLogIndex -> skip; //nothing to do if the log index is already higher
         fi;
         int ind = prevLogIndex + 1;
         for (ind: (prevLogIndex + 1) .. (MAX_LOG_LENGTH - 1)) {
+            //need to update all logs from the next index after
+            //the last log that the node has
             if 
             :: logs[lead.id].term[ind] == 0 -> break;
             :: logs[lead.id].term[ind] != 0 -> 
@@ -67,20 +71,24 @@ inline AppendEntries(leaderTerm, prevLogIndex, prevLogTerm, self, res) {
                 nodes[self].lastLogIndex = nodes[self].lastLogIndex + 1; //increment how long your log is
             fi;
         }
-    :: !res -> skip;
+    :: !res -> skip; //nothing to do if we don't need to append
     fi;
     
 
 
 }
 
+/*
+* Collects information about the leader's logs
+* to see if the given node's logs need to be appended to
+* If they need to be appended, calls AppendEntries to do so
+*/
 inline appendEntryInPeer(peer, lastIndex, appended) {
     d_step {
         byte leadId = lead.id;
         int prevIndex = lead.nextIndex[peer];
         prevIndex = prevIndex - 1;
         byte prevTerm = logs[lead.id].term[prevIndex];
-        // leaderCommit = leaderNode.commitIndex;
         AppendEntries(nodes[leadId].currentTerm, prevIndex, prevTerm, peer, appended);
         if
         :: !appended -> 
@@ -94,6 +102,7 @@ inline appendEntryInPeer(peer, lastIndex, appended) {
 
 }
 
+//Process to clean up all the logs
 active proctype main() {
     //initialize logs for each node (?) - term should be ascending, length should be randomly determined, contents randomly determined
     //need to initialize where term nor command = 0 ever
@@ -135,7 +144,8 @@ active proctype main() {
         :: appended -> break;
         od;
     }
-    //TODO: check that the logs all match
+    //check that the logs all match by going through all nodes
+    //and seeing if their logs are the same as the leaders
     bool matches = TRUE;
     int j;
     for(j: 1 .. CLUSTER_SIZE - 1) {
