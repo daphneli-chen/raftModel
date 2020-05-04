@@ -60,7 +60,7 @@ inline AppendEntries(leaderTerm, prevLogIndex, prevLogTerm, self, res) {
             logs[self].term[ind] = logs[lead.id].term[ind];
             logs[self].command[ind] = logs[lead.id].command[ind];
             nodes[self].lastLogIndex = nodes[self].lastLogIndex + 1; //increment how long your log is
-        :: ind > nodes[lead.id].lastLogIndex -> break;
+        :: ind > (MAX_LOG_LENGTH - 1) > break;
         :: else -> break;
         od;
 
