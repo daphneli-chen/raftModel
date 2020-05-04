@@ -34,11 +34,13 @@ node nodes[CLUSTER_SIZE];
 bool logsMatch = FALSE;
 
 
-inline AppendEntries(leaderTerm, prevLogIndex, prevLogTerm, self, res) {   
+inline AppendEntries(leaderTerm, prevLogIndex, prevLogTerm, self, res) {  
+    bool higherTermThanLeader = leaderTerm < nodes[self].currentTerm;
+    bool indexNotMatchPrevLog = logs[self].term[prevLogIndex] != prevLogTerm; 
     if
-    :: leaderTerm < nodes[self].currentTerm -> res = FALSE;
-    :: logs[self].term[prevLogIndex] != prevLogTerm -> res = FALSE;
-    :: else -> res = TRUE;
+    :: higherTermThanLeader -> res = FALSE;
+    :: indexNotMatchPrevLog -> res = FALSE;
+    :: !higherTermThanLeader && !indexNotMatchPrevLog -> res = TRUE;
     fi;
 
     if //if we are going to append
@@ -51,7 +53,7 @@ inline AppendEntries(leaderTerm, prevLogIndex, prevLogTerm, self, res) {
                 logs[self].command[j] = 0;
             }
             nodes[self].lastLogIndex = prevLogIndex;
-        :: else -> skip;
+        :: prevLogIndex >= nodes[self].lastLogIndex -> skip;
         fi;
 
         int ind = prevLogIndex + 1;
@@ -60,19 +62,10 @@ inline AppendEntries(leaderTerm, prevLogIndex, prevLogTerm, self, res) {
             logs[self].term[ind] = logs[lead.id].term[ind];
             logs[self].command[ind] = logs[lead.id].command[ind];
             nodes[self].lastLogIndex = nodes[self].lastLogIndex + 1; //increment how long your log is
-        :: else -> break;
+        :: logs[lead.id].term[ind] == 0 -> break;
+        :: ind > MAX_LOG_LENGTH - 1 -> break;
         od;
-
-        //updating commitIndex of this node 
-        // if
-        // :: leaderCommit > curr.commitIndex ->
-        //     if 
-        //     :: leaderCommit < curr.lastLogIndex -> curr.commitIndex = leaderCommit;
-        //     :: else -> curr.commitIndex = curr.lastLogIndex;
-        //     fi;
-        // :: else -> skip;
-        // fi;
-    :: else -> skip;
+    :: !res -> skip;
     fi;
 
 
@@ -89,27 +82,9 @@ inline appendEntryInPeer(peer, lastIndex, appended) {
     :: !appended -> 
         lead.nextIndex[peer] = lead.nextIndex[peer] - 1;
         //check does this work?, will it alter res appropriately?
-    :: else -> 
+    :: appended -> 
         lead.nextIndex[peer] = lastIndex + 1; //updating appropriate maps, we are now done with this peer
         appended = TRUE;
-        // leader.matchIndex[peer] = lastIndex;
-        // if 
-        // :: lastIndex > leaderNode.commitIndex && logs[leader.id].term[lastIndex] == leader.currentTerm ->
-        //     int count = 0;
-        //     int i;
-        //     for (i: 0 .. CLUSTER_SIZE) {
-        //         if 
-        //         :: leader.matchIndex[i] == lastIndex -> count = count + 1;
-        //         :: else -> skip;
-        //         fi;
-        //     }
-        //     if 
-        //     :: count > (CLUSTER_SIZE/2 + 1) -> 
-        //         leader.commitIndex = lastIndex
-        //         res = TRUE;
-        //     :: else -> skip;
-        //     fi;
-        // :: else res = FALSE;
     fi;
 
 
@@ -144,30 +119,6 @@ active proctype main() {
     logs[2].command[0] = 1; logs[2].command[1] = 1; logs[2].command[2] = 1;
     logs[2].command[3] = 1; logs[2].command[4] = 1;
     nodes[2].lastLogIndex = 5; nodes[2].currentTerm = 1;
-
-    /*
-    //INITIALIZATION OF THE LEADER
-    status[0] = LEADER; 
-    logs[0].term = {1, 1, 2, 2, 3}; //give leader highest term
-    logs[0].command = {5, 5, 5, 5, 5}; //we'll give leader special commands so we can tell once the leader has replicated
-    nodes[0].lastLogIndex = 4; //we have a length 4 log here
-    nodes[0].currentTerm = 3;
-    lead.id = 0;
-    lead.nextIndex = {5, 5, 5}; //initialized to leader.lastLogIndex + 1
-
-    //INITIALIZATION OF 1st FOLLOWER, just needs to append entries
-    logs[1].term = {1, 1, 2, 0, 0};
-    logs[1].command = {5, 5, 5, 0, 0};
-    nodes[1].lastLogIndex = 3;
-    nodes[1].currentTerm = 2;
-
-    //INITIALIZATION OF 2nd FOLLOWER, completely messed up logs due to a network partition
-    logs[2].term = {1, 1, 1, 1, 1};
-    logs[2].command = {1, 1, 1, 1, 1};
-    nodes[2].lastLogIndex = 5;
-    nodes[2].currentTerm = 1; //at a lower term than the leader so will accept
-    */
-
     //choose a leader, have the leader run appendEntryinPeer on all other nodes. 
     //we want to prove the log matching property 
     int i2;
@@ -177,7 +128,7 @@ active proctype main() {
         do
         :: !appended ->
             appendEntryInPeer(i2, nodes[0].lastLogIndex, appended);
-        :: else -> break;
+        :: appended -> break;
         od;
     }
     //TODO: check that the logs all match
@@ -186,10 +137,13 @@ active proctype main() {
     for(j: 1 .. CLUSTER_SIZE - 1) {
         int entry;
         for(entry: 0 .. nodes[lead.id].lastLogIndex) {
+            bool termsDontMatchLeader = logs[j].term[entry] != logs[lead.id].term[entry];
+            bool commandsDontMatchLeader = logs[j].command[entry] != logs[lead.id].command[entry];
+            bool termsOrCommandsDontMatchLeader = termsDontMatchLeader || commandsDontMatchLeader;
             if
-            :: logs[j].term[entry] != logs[lead.id].term[entry] || logs[j].command[entry] != logs[lead.id].command[entry] ->
+            :: termsOrCommandsDontMatchLeader ->
                 matches = FALSE;
-            :: else -> skip;
+            :: !termsOrCommandsDontMatchLeader -> skip;
             fi;
         }
     }

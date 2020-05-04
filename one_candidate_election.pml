@@ -16,11 +16,14 @@ byte status[CLUSTER_SIZE];
 bool oneLeader = FALSE;
 
 inline Vote(voter, candidate, res) {
+    bool sameNode = voter == candidate;
+    bool greaterTerm = term[voter] > term[candidate];
+    bool equalTermGreaterIndex = (term[voter] == term[candidate]) && index[voter] > index[candidate];
     if 
-    :: voter == candidate -> res = TRUE; //we will always vote for ourselves in a one candidate election
-    :: term[voter] > term[candidate] -> res = FALSE; //do not vote for a candidate at a lower term
-    :: term[voter] == term[candidate] && index[voter] > index[candidate] -> res = FALSE; //if terms equivalent, do not vote for a candidate who has a shorter log
-    :: else -> res = TRUE;
+    :: sameNode -> res = TRUE; //we will always vote for ourselves in a one candidate election
+    :: greaterTerm -> res = FALSE; //do not vote for a candidate at a lower term
+    :: equalTermGreaterIndex -> res = FALSE; //if terms equivalent, do not vote for a candidate who has a shorter log
+    :: !sameNode && !greaterTerm && !equalTermGreaterIndex -> res = TRUE;
     fi;
 } 
 
@@ -34,7 +37,7 @@ inline HoldElection(candidate, elected) {
             Vote(i, candidate, res);
             if 
             :: res -> count = count + 1;
-            :: else -> skip;
+            :: !res -> skip;
             fi;
         }
 
@@ -45,7 +48,7 @@ inline HoldElection(candidate, elected) {
             status[candidate] = LEADER;
             term[candidate] = term[candidate] + 1; //leader is now in a higher term
             index[candidate] = index[candidate] + 1; //adding a new entry for the new term
-        :: else -> elected = FALSE;
+        :: count <= (CLUSTER_SIZE/2 + 1) -> elected = FALSE;
         fi;
 } 
 
@@ -54,25 +57,25 @@ inline OneLeader(res) {
     for(i: 0 .. MAX_INDEX) {
         if
         :: status[i] == LEADER -> count = count + 1;
-        :: else -> skip;
+        :: status[i] != LEADER -> skip;
         fi;
     }
 
     if
     :: count == 1 -> res = TRUE;
-    :: else -> res = FALSE;
+    :: count != 1 -> res = FALSE;
     fi;
 }
 
 active proctype main() {
     int i;
     for(i: 0 .. MAX_INDEX) { //all nodes start as followers
-        status[i] = FOLLOWER; 
+        status[i] = FOLLOWER;
         byte random1;
-	      select (random1: 1 .. 11);
+	    select (random1: 1 .. 11);
         index[i] = random1; //each log has certain index length from length 1 to 11
-	      byte random2;
-	      select (random2 : 1 .. 6);
+	    byte random2;
+	    select (random2 : 1 .. 6);
         term[i] = random2; //modeling with 5 possible terms, so trace doesn't take too long
     }
     bool leaderExists = FALSE;
@@ -87,7 +90,7 @@ active proctype main() {
             :: elected -> 
                 leaderExists = TRUE;
                 break;
-            :: else -> status[j] = FOLLOWER; //candidate will fall back to leader upon failed election
+            :: !elected -> status[j] = FOLLOWER; //candidate will fall back to leader upon failed election
             fi;
 
             if 
@@ -96,10 +99,10 @@ active proctype main() {
                 for (k: 0 .. MAX_INDEX) { //all nodes start as followers
                     status[k] = FOLLOWER; 
                 }
-            :: else -> skip;
+            :: leaderExists -> skip;
             fi;
         }
-    :: else -> 
+    :: leaderExists -> 
         OneLeader(oneLeader);
         break;
     od;

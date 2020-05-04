@@ -1,7 +1,7 @@
 /*
 TO-DO: COMMENT THIS
 */
-#define CLUSTER_SIZE 5 //the number of nodes in the cluster
+#define CLUSTER_SIZE 6 //the number of nodes in the cluster
 #define MAX_INDEX 4
 #define FALSE 0
 #define TRUE 1
@@ -18,17 +18,14 @@ bool oneLeader = FALSE;
 bool twoLeader = FALSE;
 
 inline Vote(voter, candidate, res) {
-    bool sameNode = voter == candidate;
-    bool greaterTerm = term[voter] > term[candidate];
-    bool sameTermGreaterIndex = term[voter] == term[candidate] && index[voter] > index[candidate];
     if 
     :: voted[voter] -> res = FALSE;
-    :: sameNode ->
+    :: voter == candidate ->
         res = TRUE;
         voted[voter] = TRUE;
-    :: greaterTerm -> res = FALSE; //do not vote for a candidate at a lower term
-    :: sameTermGreaterIndex -> res = FALSE; //if terms equivalent, do not vote for a candidate who has a shorter log
-    :: !voted[voter] && !sameNode && !greaterTerm && !sameTermGreaterIndex ->
+    :: term[voter] > term[candidate] -> res = FALSE; //do not vote for a candidate at a lower term
+    :: term[voter] == term[candidate] && index[voter] > index[candidate] -> res = FALSE; //if terms equivalent, do not vote for a candidate who has a shorter log
+    :: else ->
         res = TRUE;
         voted[voter] = TRUE;
     fi;
@@ -45,7 +42,7 @@ proctype HoldElection(int candidate; bool elected) {
             Vote(i, candidate, res);
             if 
             :: res -> count = count + 1;
-            :: !res -> skip;
+            :: else -> skip;
             fi;
         }
 
@@ -56,7 +53,7 @@ proctype HoldElection(int candidate; bool elected) {
             status[candidate] = LEADER;
             term[candidate] = term[candidate] + 1; //leader is now in a higher term
             index[candidate] = index[candidate] + 1; //adding a new entry for the new term
-        :: count <= (CLUSTER_SIZE/2 + 1) -> elected = FALSE;
+        :: else -> elected = FALSE;
         fi;
 } 
 
@@ -65,7 +62,7 @@ inline CountLeaders(res1, res2) {
     for(i: 0 .. MAX_INDEX) {
         if
         :: status[i] == LEADER -> count = count + 1;
-        :: status[i] != LEADER -> skip;
+        :: else -> skip;
         fi;
     }
 
@@ -76,7 +73,7 @@ inline CountLeaders(res1, res2) {
     :: count == 2 ->
         res1 = FALSE;
         res2 = TRUE;
-    :: count < 1 || count > 2 ->
+    :: else ->
         res1 = FALSE;
         res2 = TRUE;
     fi;
@@ -87,11 +84,11 @@ active proctype main() {
     for(i: 0 .. MAX_INDEX) { //all nodes start as followers
         status[i] = FOLLOWER; 
         byte random1;
-        select (random1: 1 .. 11);
+	select (random1: 1 .. 11);
         index[i] = random1; // each log has certain index length from length 1 to 11
         byte random2;
-        select (random2: 1 .. 6);
-        term[i] = 0; //modeling with 5 possible terms, so trace doesn't take too long
+	select (random2: 1 .. 6);
+	term[i] = 0; //modeling with 5 possible terms, so trace doesn't take too long
         voted[i] = FALSE;
     }
     bool leaderExists = FALSE;
@@ -116,30 +113,14 @@ active proctype main() {
                 run HoldElection(candidate2, elected2);
             }
             if
-            :: elected1 ->
-                if
-                :: elected2 ->
-                    //OH NO HOW DID THEY BOTH GET ELECTED
-                    leaderExists = TRUE;
-                    oneLeader = FALSE;
-                    break;
-                :: !elected2 ->
-                    leaderExists = TRUE;
-                    break;
-                fi;
-            :: elected2 ->
-                if
-                :: elected1 ->
-                    //OH NO HOW DID THEY BOTH GET ELECTED
-                    leaderExists = TRUE;
-                    oneLeader = FALSE;
-                    break;
-                :: !elected1 ->
-                    leaderExists = TRUE;
-                    break;
-                fi;
-            :: !elected1 && !elected2 ->
-                status[j] = FOLLOWER;
+            :: elected1 || elected2 -> 
+                leaderExists = TRUE;
+                break;
+            :: elected1 && elected2 -> 
+                leaderExists = TRUE;
+                oneLeader = FALSE; //this may be unnecessary? basically if this happens this is BAD
+                break;
+            :: else -> status[j] = FOLLOWER; //candidate will fall back to leader upon failed election
             fi;
 
             if 
@@ -148,10 +129,10 @@ active proctype main() {
                 for (k: 0 .. MAX_INDEX) { //all nodes start as followers
                     status[k] = FOLLOWER; 
                 }
-            :: leaderExists -> skip;
+            :: else -> skip;
             fi;
         }
-    :: leaderExists -> 
+    :: else -> 
         CountLeaders(oneLeader, twoLeader);
         break;
     od;
@@ -159,4 +140,5 @@ active proctype main() {
 
 ltl one_leader {
     always(eventually(oneLeader == TRUE) && (twoLeader == FALSE));
+    //check if this is ok
 }
