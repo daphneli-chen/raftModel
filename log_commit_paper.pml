@@ -113,7 +113,7 @@ active proctype main() {
     lead.id = 0;
     int nd;
     for (nd: 0 .. CLUSTER_SIZE - 1) {
-        lead.nextIndex[node] = 11; //initialized to leader's last log index + 1
+        lead.nextIndex[nd] = 11; //initialized to leader's last log index + 1
     }
 
     //first follower has terms 1, 1, 1, 4, 4, 5, 5, 6, 6
@@ -191,7 +191,7 @@ active proctype main() {
     nodes[6].lastLogIndex = 10; nodes[6].currentTerm = 3;
 
     int i2;
-    for(i2: 1 .. CLUSTER_SIZE - 1) {
+    for(i2: 1 .. (CLUSTER_SIZE - 1)) {
         bool appended = FALSE;
         appendEntryInPeer(i2, nodes[0].lastLogIndex, appended);
         do
