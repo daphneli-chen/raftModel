@@ -91,7 +91,7 @@ active proctype main() {
     //initialize logs for each node (?) - term should be ascending, length should be randomly determined, contents randomly determined
     //need to initialize where term nor command = 0 ever
     int i;
-    for (i: 0.. CLUSTER_SIZE - 1) {
+    for (i: 0.. (CLUSTER_SIZE - 1)) {
         status[i] = FOLLOWER;
     }
     leader lead;
@@ -112,7 +112,7 @@ active proctype main() {
     nodes[0].lastLogIndex = 9; nodes[0].currentTerm = 6;
     lead.id = 0;
     int nd;
-    for (nd: 0 .. CLUSTER_SIZE - 1) {
+    for (nd: 0 .. (CLUSTER_SIZE - 1)) {
         lead.nextIndex[nd] = 11; //initialized to leader's last log index + 1
     }
 
@@ -146,7 +146,7 @@ active proctype main() {
     logs[3].term[5] = 5; logs[3].term[6] = 5;
     logs[3].term[7] = 6; logs[3].term[8] = 6; logs[3].term[9] = 6; logs[3].term[10] = 6;
     logs[3].term[11] = 0; // these indicate nonexistent log entries
-    for (entry: 0 .. MAX_LOG_LENGTH - 1) {
+    for (entry: 0 .. (MAX_LOG_LENGTH - 1)) {
         logs[3].command[entry] = 5;
     }
     logs[3].command[11] = 0;
@@ -158,7 +158,7 @@ active proctype main() {
     logs[4].term[5] = 5; logs[4].term[6] = 5;
     logs[4].term[7] = 6; logs[4].term[8] = 6; logs[4].term[9] = 6;
     logs[4].term[10] = 7; logs[4].term[11] = 7;
-    for (entry: 0 .. MAX_LOG_LENGTH - 1) {
+    for (entry: 0 .. (MAX_LOG_LENGTH - 1)) {
         logs[4].command[entry] = 5;
     }
     logs[4].command[10] = 2;
