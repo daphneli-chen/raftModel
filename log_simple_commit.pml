@@ -142,6 +142,7 @@ active proctype main() {
             bool termsOrCommandsDontMatchLeader = termsDontMatchLeader || commandsDontMatchLeader;
             if 
             :: termsOrCommandsDontMatchLeader -> printf("logs expected %d but got %d and commands expected %d but got %d", logs[lead.id].term[entry], logs[j].term[entry], logs[lead.id].command[entry], logs[j].command[entry]);
+            fi;
             if
             :: termsOrCommandsDontMatchLeader ->
                 matches = FALSE;
