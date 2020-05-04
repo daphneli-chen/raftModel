@@ -90,7 +90,7 @@ active proctype main() {
             :: elected -> 
                 leaderExists = TRUE;
                 break;
-            :: !elected -> status[j] = FOLLOWER; //candidate will fall back to leader upon failed election
+            :: !elected -> status[j] = FOLLOWER; //candidate will fall back to follower upon failed election
             fi;
 
             if 
