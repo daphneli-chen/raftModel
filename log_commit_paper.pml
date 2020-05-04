@@ -150,7 +150,7 @@ active proctype main() {
         logs[3].command[entry] = 5;
     }
     logs[3].command[11] = 0;
-    nodes[3].lastLogIndex = 10; nodex[3].currentTerm = 6;
+    nodes[3].lastLogIndex = 10; nodes[3].currentTerm = 6;
 
     //fourth follower has terms 1, 1, 1, 4, 4, 5, 5, 6, 6, 6, 7, 7
     logs[4].term[0] = 1; logs[4].term[1] = 1; logs[4].term[2] = 1; 
