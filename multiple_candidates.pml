@@ -38,7 +38,7 @@ inline Vote(voter, candidate, res) {
 
 
 proctype HoldElection(int candidate; bool elected) {
-        d_step {
+    atomic {
             term[candidate] = term[candidate] + 1; //candidates increment their term at the beginning of their election cycle
             int count = 0;
             bool res = FALSE;
@@ -67,7 +67,7 @@ proctype HoldElection(int candidate; bool elected) {
 inline CountLeaders(res1, res2) {
     d_step{
         int count = 0;
-	int i;
+        int i;
         for(i: 0 .. MAX_INDEX) {
             if
             :: status[i] == LEADER -> count = count + 1;
@@ -75,13 +75,13 @@ inline CountLeaders(res1, res2) {
             fi;
         }
         if
-        :: count == 1 ->
+        :: count <= 1 ->
             res1 = TRUE;
             res2 = FALSE;
         :: count == 2 ->
             res1 = FALSE;
             res2 = TRUE;
-        :: count < 1 || count > 2 ->
+        :: count > 2 ->
             res1 = FALSE;
             res2 = TRUE;
         fi;
@@ -102,7 +102,6 @@ active proctype main() {
             voted[i] = FALSE;
         }
     }
-   
     bool leaderExists = FALSE;
     do
     :: !leaderExists ->
@@ -136,6 +135,7 @@ active proctype main() {
                     break;
                 :: !elected2 ->
                     leaderExists = TRUE;
+                    oneLeader = TRUE;
                     break;
                 fi;
             :: elected2 ->
@@ -147,14 +147,14 @@ active proctype main() {
                     break;
                 :: !elected1 ->
                     leaderExists = TRUE;
+                    oneLeader = TRUE;
                     break;
                 fi;
             :: !elected1 && !elected2 ->
                 status[j] = FOLLOWER;
-
-
-            d_step {
-                if 
+                skip;
+            fi;
+                if
                 :: !leaderExists -> //resetting for the next loop
                     int k;
                     for (k: 0 .. MAX_INDEX) { //all nodes start as followers
@@ -162,7 +162,6 @@ active proctype main() {
                     }
                 :: leaderExists -> skip;
                 fi;
-            }
         }
     :: leaderExists -> 
         CountLeaders(oneLeader, twoLeader);
@@ -171,5 +170,5 @@ active proctype main() {
 }
 
 ltl one_leader {
-    always(eventually(oneLeader == TRUE) && (twoLeader == FALSE));
+    always(eventually(oneLeader == TRUE));
 }
