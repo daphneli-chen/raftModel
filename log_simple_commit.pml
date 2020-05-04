@@ -19,29 +19,30 @@ typedef log {
 typedef leader {
     byte id;
     int nextIndex[CLUSTER_SIZE];
-    // byte matchIndex[CLUSTER_SIZE]
 }
 typedef node {
     byte currentTerm;
     byte lastLogIndex;
-    // byte commitIndex
 }
 log logs[CLUSTER_SIZE];
-//byte commitIndex[CLUSTER_SIZE];
 byte status[CLUSTER_SIZE];
-//leader lead;
 node nodes[CLUSTER_SIZE];
 bool logsMatch = FALSE;
 
 
 inline AppendEntries(leaderTerm, prevLogIndex, prevLogTerm, self, res) {  
-    bool higherTermThanLeader = leaderTerm < nodes[self].currentTerm;
-    bool indexNotMatchPrevLog = logs[self].term[prevLogIndex] != prevLogTerm; 
-    if
-    :: higherTermThanLeader -> res = FALSE;
-    :: indexNotMatchPrevLog -> res = FALSE;
-    :: !higherTermThanLeader && !indexNotMatchPrevLog -> res = TRUE;
-    fi;
+    d_step {
+        bool higherTermThanLeader = leaderTerm < nodes[self].currentTerm;
+        bool indexNotMatchPrevLog = logs[self].term[prevLogIndex] != prevLogTerm; 
+        if
+        :: higherTermThanLeader -> 
+            res = FALSE;
+        :: indexNotMatchPrevLog -> res = FALSE;
+        :: !higherTermThanLeader && !indexNotMatchPrevLog -> 
+            res = TRUE;
+        fi;
+    }
+
 
     if //if we are going to append
     :: res ->
@@ -55,37 +56,39 @@ inline AppendEntries(leaderTerm, prevLogIndex, prevLogTerm, self, res) {
             nodes[self].lastLogIndex = prevLogIndex;
         :: prevLogIndex >= nodes[self].lastLogIndex -> skip;
         fi;
-
         int ind = prevLogIndex + 1;
-        do 
-        :: logs[lead.id].term[ind] != 0 -> //while there are logs in the leader to append, change the follower's logs to match the leaders
-            logs[self].term[ind] = logs[lead.id].term[ind];
-            logs[self].command[ind] = logs[lead.id].command[ind];
-            nodes[self].lastLogIndex = nodes[self].lastLogIndex + 1; //increment how long your log is
-        :: logs[lead.id].term[ind] == 0 -> break;
-        :: ind > MAX_LOG_LENGTH - 1 -> break;
-        od;
+        for (ind: (prevLogIndex + 1) .. (MAX_LOG_LENGTH - 1)) {
+            if 
+            :: logs[lead.id].term[ind] == 0 -> break;
+            :: logs[lead.id].term[ind] != 0 -> 
+                logs[self].term[ind] = logs[lead.id].term[ind];
+                logs[self].command[ind] = logs[lead.id].command[ind];
+                nodes[self].lastLogIndex = nodes[self].lastLogIndex + 1; //increment how long your log is
+            fi;
+        }
     :: !res -> skip;
     fi;
+    
 
 
 }
 
 inline appendEntryInPeer(peer, lastIndex, appended) {
-    byte leadId = lead.id;
-    int prevIndex = lead.nextIndex[peer];
-    prevIndex = prevIndex - 1;
-    byte prevTerm = logs[lead.id].term[prevIndex];
-    // leaderCommit = leaderNode.commitIndex;
-    AppendEntries(nodes[leadId].currentTerm, prevIndex, prevTerm, peer, appended);
-    if
-    :: !appended -> 
-        lead.nextIndex[peer] = lead.nextIndex[peer] - 1;
-        //check does this work?, will it alter res appropriately?
-    :: appended -> 
-        lead.nextIndex[peer] = lastIndex + 1; //updating appropriate maps, we are now done with this peer
-        appended = TRUE;
-    fi;
+    d_step {
+        byte leadId = lead.id;
+        int prevIndex = lead.nextIndex[peer];
+        prevIndex = prevIndex - 1;
+        byte prevTerm = logs[lead.id].term[prevIndex];
+        // leaderCommit = leaderNode.commitIndex;
+        AppendEntries(nodes[leadId].currentTerm, prevIndex, prevTerm, peer, appended);
+        if
+        :: !appended -> 
+            lead.nextIndex[peer] = lead.nextIndex[peer] - 1;
+        :: appended -> 
+            lead.nextIndex[peer] = lastIndex + 1; //updating appropriate maps, we are now done with this peer
+            appended = TRUE;
+        fi;
+    }
 
 
 }
@@ -116,11 +119,11 @@ active proctype main() {
 
     logs[2].term[0] = 1; logs[2].term[1] = 1; logs[2].term[2] = 1;
     logs[2].term[3] = 1; logs[2].term[4] = 1;
-    logs[2].command[0] = 1; logs[2].command[1] = 1; logs[2].command[2] = 1;
+    logs[2].command[0] = 5; logs[2].command[1] = 5; logs[2].command[2] = 1;
     logs[2].command[3] = 1; logs[2].command[4] = 1;
     nodes[2].lastLogIndex = 5; nodes[2].currentTerm = 1;
     //choose a leader, have the leader run appendEntryinPeer on all other nodes. 
-    //we want to prove the log matching property 
+    //we want to prove the log matching property
     int i2;
     for(i2: 1 .. CLUSTER_SIZE - 1) {
         bool appended = FALSE;
@@ -140,14 +143,12 @@ active proctype main() {
             bool termsDontMatchLeader = logs[j].term[entry] != logs[lead.id].term[entry];
             bool commandsDontMatchLeader = logs[j].command[entry] != logs[lead.id].command[entry];
             bool termsOrCommandsDontMatchLeader = termsDontMatchLeader || commandsDontMatchLeader;
-            if 
-            :: termsOrCommandsDontMatchLeader -> printf("logs expected %d but got %d and commands expected %d but got %d", logs[lead.id].term[entry], logs[j].term[entry], logs[lead.id].command[entry], logs[j].command[entry]);
-            fi;
             if
             :: termsOrCommandsDontMatchLeader ->
-                printf("BAD STUFF");
                 matches = FALSE;
-            :: !termsOrCommandsDontMatchLeader -> skip;
+            :: !termsOrCommandsDontMatchLeader -> 
+                skip;
+            
             fi;
         }
     }
