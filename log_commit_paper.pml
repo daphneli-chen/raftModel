@@ -121,7 +121,7 @@ active proctype main() {
     logs[1].term[3] = 4; logs[1].term[4] = 4;
     logs[1].term[5] = 5; logs[1].term[6] = 5;
     logs[1].term[7] = 6; logs[1].term[8] = 6; 
-    logs[1].term[9] = 0; logs[1].term[10] = 0; logs[1].term[11] = 0
+    logs[1].term[9] = 0; logs[1].term[10] = 0; logs[1].term[11] = 0;
     logs[1].command[0] = 5; logs[1].command[1] = 5; logs[1].command[2] = 5;
     logs[1].command[3] = 5; logs[1].command[4] = 5;
     logs[1].command[5] = 5; logs[1].command[6] = 5;
@@ -133,7 +133,7 @@ active proctype main() {
     logs[2].term[0] = 1; logs[2].term[1] = 1; logs[2].term[2] = 1;
     logs[2].term[3] = 4; 
     logs[2].term[4] = 0; logs[2].term[5] = 0; logs[2].term[6] = 0; logs[2].term[7] = 0;
-    logs[2].term[8] = 0; logs[2].term[9] = 0; logs[2].term[10] = 0; logs[2].term[11] = 0
+    logs[2].term[8] = 0; logs[2].term[9] = 0; logs[2].term[10] = 0; logs[2].term[11] = 0;
     logs[2].command[0] = 5; logs[2].command[1] = 5; logs[2].command[2] = 5;
     logs[2].command[3] = 5; 
     logs[2].command[4] = 0; logs[2].command[5] = 0; logs[2].command[6] = 0; logs[2].command[7] = 0; 
