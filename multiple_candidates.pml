@@ -1,5 +1,5 @@
 /*
-TO-DO: COMMENT THIS
+demonstrates that when when elections happen with two candidates per election cycle, one leader will always eventually be elected but never two leaders
 */
 #define CLUSTER_SIZE 5 //the number of nodes in the cluster
 #define MAX_INDEX 4
