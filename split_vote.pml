@@ -15,7 +15,6 @@ byte index[CLUSTER_SIZE]; /* index of last log index for a certain node */
 byte status[CLUSTER_SIZE];
 bool voted[CLUSTER_SIZE];
 bool oneLeader = FALSE;
-bool twoLeader = FALSE;
 
 inline Vote(voter, candidate, res) {
     d_step {
