@@ -101,67 +101,69 @@ active proctype main() {
             voted[i] = FALSE;
         }
     }
-    bool leaderExists = FALSE;
-    do
-    :: !leaderExists ->
-        int j;
-        for(j: 0 .. MAX_INDEX) { //since the terms and indices of the nodes are all randomized, going through one by one is choosing a candidate 'randomly' like having random timeouts
-            int candidate1 = j;
-            int candidate2 = MAX_INDEX - j;
-            status[candidate1] = CANDIDATE;
-            status[candidate2] = CANDIDATE; //choose the other candidate because this will never coincide in a cluster size of 5
-            voted[candidate1] = TRUE;
-            voted[candidate2] = TRUE; //they will vote for themselves so overall since there are two of them votes don't matter, they just cannot vote for the other
-            bool elected1 = FALSE;
-            bool elected2 = FALSE;
-            int vot;
-            for(vot: 0 .. MAX_INDEX) {
-                voted[vot] = FALSE;
-            }
-            atomic {
-                run HoldElection(candidate1, elected1);
-                run HoldElection(candidate2, elected2);
-            }
-            if
-            :: elected1 ->
-                if
-                :: elected2 ->
-                    //OH NO HOW DID THEY BOTH GET ELECTED
-                    leaderExists = TRUE;
-                    oneLeader = FALSE;
-                    break;
-                :: !elected2 ->
-                    leaderExists = TRUE;
-                    break;
-                fi;
-            :: elected2 ->
+    d_step {
+        bool leaderExists = FALSE;
+        do
+        :: !leaderExists ->
+            int j;
+            for(j: 0 .. MAX_INDEX) { //since the terms and indices of the nodes are all randomized, going through one by one is choosing a candidate 'randomly' like having random timeouts
+                int candidate1 = j;
+                int candidate2 = MAX_INDEX - j;
+                status[candidate1] = CANDIDATE;
+                status[candidate2] = CANDIDATE; //choose the other candidate because this will never coincide in a cluster size of 5
+                voted[candidate1] = TRUE;
+                voted[candidate2] = TRUE; //they will vote for themselves so overall since there are two of them votes don't matter, they just cannot vote for the other
+                bool elected1 = FALSE;
+                bool elected2 = FALSE;
+                int vot;
+                for(vot: 0 .. MAX_INDEX) {
+                    voted[vot] = FALSE;
+                }
+                atomic {
+                    run HoldElection(candidate1, elected1);
+                    run HoldElection(candidate2, elected2);
+                }
                 if
                 :: elected1 ->
-                    //OH NO HOW DID THEY BOTH GET ELECTED
-                    leaderExists = TRUE;
-                    oneLeader = FALSE;
-                    break;
-                :: !elected1 ->
-                    leaderExists = TRUE;
-                    break;
+                    if
+                    :: elected2 ->
+                        //OH NO HOW DID THEY BOTH GET ELECTED
+                        leaderExists = TRUE;
+                        oneLeader = FALSE;
+                        break;
+                    :: !elected2 ->
+                        leaderExists = TRUE;
+                        break;
+                    fi;
+                :: elected2 ->
+                    if
+                    :: elected1 ->
+                        //OH NO HOW DID THEY BOTH GET ELECTED
+                        leaderExists = TRUE;
+                        oneLeader = FALSE;
+                        break;
+                    :: !elected1 ->
+                        leaderExists = TRUE;
+                        break;
+                    fi;
+                :: !elected1 && !elected2 ->
+                    status[j] = FOLLOWER;
                 fi;
-            :: !elected1 && !elected2 ->
-                status[j] = FOLLOWER;
-            fi;
 
-            if 
-            :: !leaderExists -> //resetting for the next loop
-                int k;
-                for (k: 0 .. MAX_INDEX) { //all nodes start as followers
-                    status[k] = FOLLOWER; 
-                }
-            :: leaderExists -> skip;
-            fi;
-        }
-    :: leaderExists -> 
-        CountLeaders(oneLeader, twoLeader);
-        break;
-    od;
+                if 
+                :: !leaderExists -> //resetting for the next loop
+                    int k;
+                    for (k: 0 .. MAX_INDEX) { //all nodes start as followers
+                        status[k] = FOLLOWER; 
+                    }
+                :: leaderExists -> skip;
+                fi;
+            }
+        :: leaderExists -> 
+            CountLeaders(oneLeader, twoLeader);
+            break;
+        od;
+    }
 }
 
 ltl one_leader {
