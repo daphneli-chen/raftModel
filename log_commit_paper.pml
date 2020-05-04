@@ -111,8 +111,8 @@ active proctype main() {
     logs[0].command[11] = 0;
     nodes[0].lastLogIndex = 9; nodes[0].currentTerm = 6;
     lead.id = 0;
-    int node;
-    for (node: 0 .. CLUSTER_SIZE - 1) {
+    int nd;
+    for (nd: 0 .. CLUSTER_SIZE - 1) {
         lead.nextIndex[node] = 11; //initialized to leader's last log index + 1
     }
 
@@ -204,7 +204,7 @@ active proctype main() {
     bool matches = TRUE;
     int j;
     for(j: 1 .. CLUSTER_SIZE - 1) {
-        int entry;
+        entry;
         for(entry: 0 .. nodes[lead.id].lastLogIndex) {
             if
             :: logs[j].term[entry] != logs[lead.id].term[entry] || logs[j].command[entry] != logs[lead.id].command[entry] ->
