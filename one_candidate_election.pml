@@ -2,7 +2,7 @@
 demonstrates that when when elections happen with one candidate per election cycle a leader will always be elected 
 */
 #define CLUSTER_SIZE 5 //the number of nodes in the cluster
-#define MAX_INDEX 4
+#define MAX_INDEX 4 //the maximum index in any array of nodes
 #define FALSE 0
 #define TRUE 1
 #define FOLLOWER 0
@@ -12,9 +12,13 @@ demonstrates that when when elections happen with one candidate per election cyc
 
 byte term[CLUSTER_SIZE]; /* term of last log index for a certain node */
 byte index[CLUSTER_SIZE]; /* index of last log index for a certain node */
-byte status[CLUSTER_SIZE];
-bool oneLeader = FALSE;
+byte status[CLUSTER_SIZE]; //stores whether each node is a leader, candidate or follower
+bool oneLeader = FALSE; //we don't have a leader yet
 
+/*
+* Given a voter and the candidate, stores a boolean in res
+* which represents whether that voter votes for the candidate
+*/
 inline Vote(voter, candidate, res) {
     d_step {
         bool sameNode = voter == candidate;
@@ -29,7 +33,13 @@ inline Vote(voter, candidate, res) {
     }
 } 
 
-
+/*
+* Simulates the process of holding an election for the given candidate
+* Goes through each node and asks them if they'd vote for this candidate
+* Counts the votes at the end and if the candidate won more than half,
+* the candidate wins the election.
+* Sets elected to True if candidate wins, false otherwise.
+*/
 inline HoldElection(candidate, elected) {
         d_step {
             term[candidate] = term[candidate] + 1; //candidates increment their term at the beginning of their election cycle
@@ -57,6 +67,10 @@ inline HoldElection(candidate, elected) {
         }
 } 
 
+/*
+* Checks if there indeed was only one Leader
+* 
+*/
 inline OneLeader(res) {
     d_step {
 	int i;
