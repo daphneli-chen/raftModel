@@ -67,6 +67,7 @@ proctype HoldElection(int candidate; bool elected) {
 inline CountLeaders(res1, res2) {
     d_step{
         int count = 0;
+	int i;
         for(i: 0 .. MAX_INDEX) {
             if
             :: status[i] == LEADER -> count = count + 1;
