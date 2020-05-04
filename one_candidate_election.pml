@@ -59,6 +59,7 @@ inline HoldElection(candidate, elected) {
 
 inline OneLeader(res) {
     d_step {
+	int i;
         int count = 0;
         for(i: 0 .. MAX_INDEX) {
             if
