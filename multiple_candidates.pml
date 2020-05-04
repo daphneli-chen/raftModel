@@ -18,81 +18,88 @@ bool oneLeader = FALSE;
 bool twoLeader = FALSE;
 
 inline Vote(voter, candidate, res) {
-    bool sameNode = voter == candidate;
-    bool greaterTerm = term[voter] > term[candidate];
-    bool sameTermGreaterIndex = term[voter] == term[candidate] && index[voter] > index[candidate];
-    if 
-    :: voted[voter] -> res = FALSE;
-    :: sameNode ->
-        res = TRUE;
-        voted[voter] = TRUE;
-    :: greaterTerm -> res = FALSE; //do not vote for a candidate at a lower term
-    :: sameTermGreaterIndex -> res = FALSE; //if terms equivalent, do not vote for a candidate who has a shorter log
-    :: !voted[voter] && !sameNode && !greaterTerm && !sameTermGreaterIndex ->
-        res = TRUE;
-        voted[voter] = TRUE;
-    fi;
+    d_step {
+        bool sameNode = voter == candidate;
+        bool greaterTerm = term[voter] > term[candidate];
+        bool sameTermGreaterIndex = term[voter] == term[candidate] && index[voter] > index[candidate];
+        if 
+        :: voted[voter] -> res = FALSE;
+        :: sameNode ->
+            res = TRUE;
+            voted[voter] = TRUE;
+        :: greaterTerm -> res = FALSE; //do not vote for a candidate at a lower term
+        :: sameTermGreaterIndex -> res = FALSE; //if terms equivalent, do not vote for a candidate who has a shorter log
+        :: !voted[voter] && !sameNode && !greaterTerm && !sameTermGreaterIndex ->
+            res = TRUE;
+            voted[voter] = TRUE;
+        fi;
+    }
 } 
 
 
 proctype HoldElection(int candidate; bool elected) {
-        term[candidate] = term[candidate] + 1; //candidates increment their term at the beginning of their election cycle
-        int count = 0;
-        bool res = FALSE;
-        //gather votes from all nodes, candidate will vote for itself
-        int i;
-        for(i: 0 .. MAX_INDEX) {
-            Vote(i, candidate, res);
-            if 
-            :: res -> count = count + 1;
-            :: !res -> skip;
+        d_step {
+            term[candidate] = term[candidate] + 1; //candidates increment their term at the beginning of their election cycle
+            int count = 0;
+            bool res = FALSE;
+            //gather votes from all nodes, candidate will vote for itself
+            int i;
+            for(i: 0 .. MAX_INDEX) {
+                Vote(i, candidate, res);
+                if 
+                :: res -> count = count + 1;
+                :: !res -> skip;
+                fi;
+            }
+
+            //count votes and figure out who was elected
+            if
+            :: count > (CLUSTER_SIZE/2 + 1) -> 
+                elected = TRUE;
+                status[candidate] = LEADER;
+                term[candidate] = term[candidate] + 1; //leader is now in a higher term
+                index[candidate] = index[candidate] + 1; //adding a new entry for the new term
+            :: count <= (CLUSTER_SIZE/2 + 1) -> elected = FALSE;
             fi;
         }
-
-        //count votes and figure out who was elected
-        if
-        :: count > (CLUSTER_SIZE/2 + 1) -> 
-            elected = TRUE;
-            status[candidate] = LEADER;
-            term[candidate] = term[candidate] + 1; //leader is now in a higher term
-            index[candidate] = index[candidate] + 1; //adding a new entry for the new term
-        :: count <= (CLUSTER_SIZE/2 + 1) -> elected = FALSE;
-        fi;
 } 
 
 inline CountLeaders(res1, res2) {
-    int count = 0;
-    for(i: 0 .. MAX_INDEX) {
+    d_step{
+        int count = 0;
+        for(i: 0 .. MAX_INDEX) {
+            if
+            :: status[i] == LEADER -> count = count + 1;
+            :: status[i] != LEADER -> skip;
+            fi;
+        }
         if
-        :: status[i] == LEADER -> count = count + 1;
-        :: status[i] != LEADER -> skip;
+        :: count == 1 ->
+            res1 = TRUE;
+            res2 = FALSE;
+        :: count == 2 ->
+            res1 = FALSE;
+            res2 = TRUE;
+        :: count < 1 || count > 2 ->
+            res1 = FALSE;
+            res2 = TRUE;
         fi;
     }
-
-    if
-    :: count == 1 ->
-        res1 = TRUE;
-        res2 = FALSE;
-    :: count == 2 ->
-        res1 = FALSE;
-        res2 = TRUE;
-    :: count < 1 || count > 2 ->
-        res1 = FALSE;
-        res2 = TRUE;
-    fi;
 }
 
 active proctype main() {
+    d_step {
     int i;
-    for(i: 0 .. MAX_INDEX) { //all nodes start as followers
-        status[i] = FOLLOWER; 
-        byte random1;
-        select (random1: 1 .. 11);
-        index[i] = random1; // each log has certain index length from length 1 to 11
-        byte random2;
-        select (random2: 1 .. 6);
-        term[i] = 0; //modeling with 5 possible terms, so trace doesn't take too long
-        voted[i] = FALSE;
+        for(i: 0 .. MAX_INDEX) { //all nodes start as followers
+            status[i] = FOLLOWER; 
+            byte random1;
+            select (random1: 1 .. 11);
+            index[i] = random1; // each log has certain index length from length 1 to 11
+            byte random2;
+            select (random2: 1 .. 6);
+            term[i] = 0; //modeling with 5 possible terms, so trace doesn't take too long
+            voted[i] = FALSE;
+        }
     }
     bool leaderExists = FALSE;
     do
