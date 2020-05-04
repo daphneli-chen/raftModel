@@ -69,12 +69,14 @@ inline HoldElection(candidate, elected) {
 
 /*
 * Checks if there indeed was only one Leader
-* 
+* Counts the number of leaders and makes sure it is only one
+* Stores a boolean in res saying if there is indeed only one leader
 */
 inline OneLeader(res) {
     d_step {
-	int i;
+        int i;
         int count = 0;
+        //count all of the leaders
         for(i: 0 .. MAX_INDEX) {
             if
             :: status[i] == LEADER -> count = count + 1;
@@ -82,6 +84,7 @@ inline OneLeader(res) {
             fi;
         }
 
+        //Check the number of leaders
         if
         :: count == 1 -> res = TRUE;
         :: count != 1 -> res = FALSE;
@@ -89,6 +92,9 @@ inline OneLeader(res) {
     }
 }
 
+/*
+* Runs the electino cycle!
+*/
 active proctype main() {
     d_step {
         int i;
@@ -106,7 +112,9 @@ active proctype main() {
     do
     :: !leaderExists ->
         int j;
-        for(j: 0 .. MAX_INDEX) { //since the terms and indices of the nodes are all randomized, going through one by one is choosing a candidate 'randomly' like having random timeouts
+        for(j: 0 .. MAX_INDEX) {
+            //since the terms and indices of the nodes are all randomized,
+            //going through one by one is choosing a candidate 'randomly' like having random timeouts
             status[j] = CANDIDATE;
             bool elected = FALSE;
             HoldElection(j, elected);
@@ -127,11 +135,13 @@ active proctype main() {
             fi;
         }
     :: leaderExists -> 
+        //we have a leader let's check that there's only one
         OneLeader(oneLeader);
         break;
     od;
 }
 
 ltl one_leader {
-    always (eventually (oneLeader == TRUE)); //check if this is ok)
+    //Want to show that we will have a leader eventually
+    always (eventually (oneLeader == TRUE));
 }
