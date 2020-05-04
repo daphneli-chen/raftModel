@@ -126,34 +126,32 @@ active proctype main() {
                 run HoldElection(candidate1, elected1);
                 run HoldElection(candidate2, elected2);
             }
-            d_step {
             if
-                :: elected1 ->
-                    if
-                    :: elected2 ->
-                        //OH NO HOW DID THEY BOTH GET ELECTED
-                        leaderExists = TRUE;
-                        oneLeader = FALSE;
-                        break;
-                    :: !elected2 ->
-                        leaderExists = TRUE;
-                        break;
-                    fi;
+            :: elected1 ->
+                if
                 :: elected2 ->
-                    if
-                    :: elected1 ->
-                        //OH NO HOW DID THEY BOTH GET ELECTED
-                        leaderExists = TRUE;
-                        oneLeader = FALSE;
-                        break;
-                    :: !elected1 ->
-                        leaderExists = TRUE;
-                        break;
-                    fi;
-                :: !elected1 && !elected2 ->
-                    status[j] = FOLLOWER;
+                    //OH NO HOW DID THEY BOTH GET ELECTED
+                    leaderExists = TRUE;
+                    oneLeader = FALSE;
+                    break;
+                :: !elected2 ->
+                    leaderExists = TRUE;
+                    break;
                 fi;
-            }
+            :: elected2 ->
+                if
+                :: elected1 ->
+                    //OH NO HOW DID THEY BOTH GET ELECTED
+                    leaderExists = TRUE;
+                    oneLeader = FALSE;
+                    break;
+                :: !elected1 ->
+                    leaderExists = TRUE;
+                    break;
+                fi;
+            :: !elected1 && !elected2 ->
+                status[j] = FOLLOWER;
+
 
             d_step {
                 if 
