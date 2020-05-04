@@ -108,9 +108,9 @@ active proctype main() {
     :: !leaderExists ->
         int j;
         for(j: 0 .. MAX_INDEX) { //since the terms and indices of the nodes are all randomized, going through one by one is choosing a candidate 'randomly' like having random timeouts
+            int candidate1 = j;
+            int candidate2 = MAX_INDEX - j;
             d_step {
-                int candidate1 = j;
-                int candidate2 = MAX_INDEX - j;
                 status[candidate1] = CANDIDATE;
                 status[candidate2] = CANDIDATE; //choose the other candidate because this will never coincide in a cluster size of 5
                 voted[candidate1] = TRUE;
