@@ -1,8 +1,7 @@
 /*
-log matching property:
-if any two distinct log entries have the same term number and the same index then they will store the exact same command and be identical in all the preceding entries 
-simulates a leader getting a new message from a client, must send that message to all other noes and if gets a succesful reply then everyone increments commit index
-if we can get 
+Log matching property:
+If any two distinct log entries have the same term number and the same index then they will store the exact same command and be identical in all the preceding entries 
+simulates a leader getting a new message from a client, must send that message to all other noes and if gets a successful reply then everyone increments commit index.
 */
 #define CLUSTER_SIZE 3
 #define MAX_LOG_LENGTH 12

@@ -76,7 +76,7 @@ inline OneLeader(res) {
             :: status[i] != LEADER -> skip;
             fi;
         }
-
+	//exactly one leader
         if
         :: count == 1 -> res = TRUE;
         :: count != 1 -> res = FALSE;
@@ -128,5 +128,5 @@ active proctype main() {
 }
 
 ltl one_leader {
-    always (eventually (oneLeader == TRUE));
+    always (eventually(oneLeader == TRUE));
 }
