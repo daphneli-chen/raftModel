@@ -36,6 +36,7 @@ inline HoldElection(candidate, elected) {
             int count = 0;
             bool res = FALSE;
             //gather votes from all nodes, candidate will vote for itself
+            int i;
             for(i: 0 .. MAX_INDEX) {
                 Vote(i, candidate, res);
                 if 
