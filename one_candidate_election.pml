@@ -64,7 +64,7 @@ inline HoldElection(candidate, elected) {
 } 
 
 /*
-Counts the number of leaders (should only be one).
+Counts the number of leaders to ensure that there is only one.
 */
 inline OneLeader(res) {
     d_step {
