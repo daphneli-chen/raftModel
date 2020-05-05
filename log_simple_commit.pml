@@ -1,8 +1,7 @@
 /*
-log matching property:
-if any two distinct log entries have the same term number and the same index then they will store the exact same command and be identical in all the preceding entries 
-simulates a leader getting a new message from a client, must send that message to all other nodes and if gets a succesful reply then everyone increments commit index
-if we can get 
+Log matching property:
+If any two distinct log entries have the same term number and the same index then they will store the exact same command and be identical in all the preceding entries 
+simulates a leader getting a new message from a client, must send that message to all other nodes and if gets a successful reply then everyone increments commit index.
 */
 #define CLUSTER_SIZE 3
 #define MAX_LOG_LENGTH 5
@@ -73,9 +72,6 @@ inline AppendEntries(leaderTerm, prevLogIndex, prevLogTerm, self, res) {
         }
     :: !res -> skip; //nothing to do if we don't need to append
     fi;
-    
-
-
 }
 
 /*
@@ -98,13 +94,11 @@ inline appendEntryInPeer(peer, lastIndex, appended) {
             appended = TRUE;
         fi;
     }
-
-
 }
 
 //Process to clean up all the logs
 active proctype main() {
-    //initialize logs for each node (?) - term should be ascending, length should be randomly determined, contents randomly determined
+    //initialize logs for each node - term should be ascending, length should be randomly determined, contents randomly determined
     //need to initialize where term nor command = 0 ever
     int i;
     for (i: 0.. CLUSTER_SIZE - 1) {

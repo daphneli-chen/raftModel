@@ -1,5 +1,5 @@
 /*
-demonstrates that when when elections happen with two candidates per election cycle, one leader will always eventually be elected but never two leaders
+Demonstrates that when when elections happen with two candidates per election cycle, one leader will always eventually be elected but never two leaders.
 */
 #define CLUSTER_SIZE 5 //the number of nodes in the cluster
 #define MAX_INDEX 4
@@ -16,9 +16,13 @@ byte status[CLUSTER_SIZE];
 bool voted[CLUSTER_SIZE];
 bool oneLeader = FALSE;
 
+
+/*
+Voting rules based on the term/logs of the candidate compared to the voter.
+*/
 inline Vote(voter, candidate, res) {
     d_step {
-        bool sameNode = voter == candidate;
+        bool sameNode = voter == candidate; //we will vote for ourselves
         bool greaterTerm = term[voter] > term[candidate];
         bool sameTermGreaterIndex = term[voter] == term[candidate] && index[voter] > index[candidate];
         if 
@@ -35,13 +39,15 @@ inline Vote(voter, candidate, res) {
     }
 } 
 
-
+/*
+Models the election process for a given candidate.
+*/
 proctype HoldElection(int candidate; bool elected) {
     atomic {
             term[candidate] = term[candidate] + 1; //candidates increment their term at the beginning of their election cycle
             int count = 0;
             bool res = FALSE;
-            //gather votes from all nodes, candidate will vote for itself
+            //gather votes from all nodes (candidate will vote for itself)
             int i;
             for(i: 0 .. MAX_INDEX) {
                 Vote(i, candidate, res);
@@ -63,6 +69,9 @@ proctype HoldElection(int candidate; bool elected) {
         }
 } 
 
+/*
+Counts the number of leaders.
+*/
 inline CountLeaders(res1) {
     d_step{
         int count = 0;
@@ -119,7 +128,7 @@ active proctype main() {
         :: elected1 ->
             if
             :: elected2 ->
-                //OH NO HOW DID THEY BOTH GET ELECTED
+                //OH NO HOW DID THEY BOTH GET ELECTED- mark this as an issue
                 leaderExists = TRUE;
                 oneLeader = FALSE;
                 break;
@@ -131,7 +140,7 @@ active proctype main() {
         :: elected2 ->
             if
             :: elected1 ->
-                //OH NO HOW DID THEY BOTH GET ELECTED
+                //OH NO HOW DID THEY BOTH GET ELECTED- mark as issue
                 leaderExists = TRUE;
                 oneLeader = FALSE;
                 break;

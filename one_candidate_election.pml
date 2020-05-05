@@ -1,5 +1,5 @@
 /*
-demonstrates that when when elections happen with one candidate per election cycle a leader will always be elected 
+Demonstrates that when when elections happen with one candidate per election cycle a leader will always be elected.
 */
 #define CLUSTER_SIZE 5 //the number of nodes in the cluster
 #define MAX_INDEX 4 //the maximum index in any array of nodes
@@ -18,6 +18,7 @@ bool oneLeader = FALSE; //we don't have a leader yet
 /*
 * Given a voter and the candidate, stores a boolean in res
 * which represents whether that voter votes for the candidate
+Voting rules based on the term/logs of the candidate compared to the voter.
 */
 inline Vote(voter, candidate, res) {
     d_step {
@@ -45,7 +46,7 @@ inline HoldElection(candidate, elected) {
             term[candidate] = term[candidate] + 1; //candidates increment their term at the beginning of their election cycle
             int count = 0;
             bool res = FALSE;
-            //gather votes from all nodes, candidate will vote for itself
+            //gather votes from all nodes (candidate will vote for itself)
             int i;
             for(i: 0 .. MAX_INDEX) {
                 Vote(i, candidate, res);
@@ -59,6 +60,7 @@ inline HoldElection(candidate, elected) {
             if
             :: count > (CLUSTER_SIZE/2 + 1) -> 
                 elected = TRUE;
+		//if a majority of nodes vote for a candidate, candidate becomes the leader
                 status[candidate] = LEADER;
                 term[candidate] = term[candidate] + 1; //leader is now in a higher term
                 index[candidate] = index[candidate] + 1; //adding a new entry for the new term
@@ -71,6 +73,7 @@ inline HoldElection(candidate, elected) {
 * Checks if there indeed was only one Leader
 * Counts the number of leaders and makes sure it is only one
 * Stores a boolean in res saying if there is indeed only one leader
+Counts the number of leaders to ensure that there is only one.
 */
 inline OneLeader(res) {
     d_step {
@@ -83,7 +86,6 @@ inline OneLeader(res) {
             :: status[i] != LEADER -> skip;
             fi;
         }
-
         //Check the number of leaders
         if
         :: count == 1 -> res = TRUE;
@@ -142,6 +144,10 @@ active proctype main() {
 }
 
 ltl one_leader {
+<<<<<<< HEAD
     //Want to show that we will have a leader eventually
     always (eventually (oneLeader == TRUE));
+=======
+    always (eventually(oneLeader == TRUE));
+>>>>>>> 04daeac3b628f3addb15c1d0a44a4f88a3a75089
 }
